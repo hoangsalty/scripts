@@ -50,7 +50,7 @@ function Save()
     writefile(Name, game:GetService('HttpService'):JSONEncode(Settings))
 end
 
-local Lib = loadstring(game:HttpGet('https://raw.githubusercontent.com/hoangsalty/roblox_scripts/main/Materials/UISource/Mercury_Lib.lua?token=GHSAT0AAAAAABTMVUNKX6AEHEIJBAXXWQIIYSRVF2Q'))()
+local Lib = loadstring(game:HttpGet('https://raw.githubusercontent.com/hoangsalty/roblox_scripts/main/Materials/UISource/Mercury_Lib.lua'))()
 local Window = Lib:Create{
     Name = 'World//Zero',
     Size = UDim2.fromOffset(600, 400),

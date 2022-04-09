@@ -1,5 +1,5 @@
 --// Variables
-local library = loadstring(game:HttpGet('https://raw.githubusercontent.com/hoangsalty/Scripts/master/uwuware.lua'))()
+local library = loadstring(game:HttpGet('loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/un-named%20backups/jans", true))()'))()
 
 for i,v in next, getconnections(game.Players.LocalPlayer.Idled) do
     v:Disable()

@@ -1152,7 +1152,7 @@ else
                     ['Primary'] 	= {},
                 }
                 local Delay = {
-                    ['Mage'] = 0.3,
+                    ['Mage'] = 0.35,
                     ['Swordmaster'] = 0.4,
                     ['Defender'] = 0.4,
         
@@ -1161,7 +1161,7 @@ else
                     ['Guardian'] = 0.4,
         
                     ['MageOfLight'] = 0.2,
-                    ['Berserker'] = 0.3,
+                    ['Berserker'] = 0.35,
                     ['Paladin'] = 0.2,
         
                     ['Demon'] = 0.35,
@@ -1169,7 +1169,7 @@ else
                     ['Archer'] = 0.35,
 
                     ['Summoner'] = 0.65,
-                    ['Warlord'] = 0.3,
+                    ['Warlord'] = 0.4,
                 }
 
                 function GetObjectPos()
@@ -1436,7 +1436,7 @@ else
                             end
 
                             if attack == AttackTypes[skilltype][#AttackTypes[skilltype]] then break end
-                            task.wait(0.04)
+                            task.wait(0.035)
                         end
                     end
                 end

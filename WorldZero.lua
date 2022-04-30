@@ -814,7 +814,7 @@ else
         
                         function Tween(target)
                             if target then
-                                local Speed = 0.225
+                                local Speed = 0.15
                                 if not ClientRoot:FindFirstChild('BodyVelocity') then
                                     local bv = Instance.new('BodyVelocity')
                                     bv.Parent = ClientRoot
@@ -942,14 +942,6 @@ else
                         
                         return {NextDungeon, NextDiff}
                     end
-        
-                    function CanMoveToWorld(WorldID)
-                        for i,v in next, require(game.ReplicatedStorage.Shared.Teleport.WorldData) do
-                            if v.ID == WorldID and ClientProfile.Level.Value >= v.LevelRequirement then
-                                return true
-                            end
-                        end
-                    end
                     
                     function QuestRoute(Mode, DoQuest)
                         local WorldIDs = {
@@ -974,15 +966,17 @@ else
                             5862275930, --Halloween Hub
                             4526768266, --Holiday Hub
                         }
+                        
                         local QuestType = Mode.Objective[1]
                         local TargetTable = Mode.Objective[3]
                         local LinkedWorld = Mode.LinkedWorld
-                        local CorrectWorld = tonumber(string.match(Client.PlayerGui.QuestList.QuestList.ListFrame.Title.Text, '%d+')) == LinkedWorld
-                        
+                        local CurrentWorld = require(game.ReplicatedStorage.Shared.Teleport):GetCurrentWorldData()['WorldOrderID']
+                        local CorrectWorld = CurrentWorld == LinkedWorld
+
                         if QuestType == 'KillMob' then
                             if not TowerTargets[TargetTable[1]] then
                                 if InDungeon or not CorrectWorld or table.find(SpecialWorlds, game.PlaceId) then
-                                    if CanMoveToWorld(WorldIDs[LinkedWorld]) then
+                                    if require(game.ReplicatedStorage.Shared.Teleport):WorldIsAvailableToPlayer(WorldIDs[LinkedWorld], Client) then
                                         Window:set_status('Move to: World '..tostring(LinkedWorld)..' | Quest: '..tostring(Mode.Name))
                                         game.ReplicatedStorage.Shared.Teleport.TeleportToHub:FireServer(WorldIDs[LinkedWorld])
                                     else
@@ -990,7 +984,7 @@ else
                                         game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(ListFarm()[#ListFarm()].ID)
                                     end
                                 elseif not InDungeon and CorrectWorld and not table.find(SpecialWorlds, game.PlaceId) and DoQuest then
-                                    --Window:set_status('Do quest: '..tostring(Mode.Name))
+                                    Window:set_status('Do quest: '..tostring(Mode.Name))
                                     FarmOpenWorld(TargetTable)
                                 end
                             else
@@ -1161,7 +1155,7 @@ else
                     ['Guardian'] = 0.4,
         
                     ['MageOfLight'] = 0.2,
-                    ['Berserker'] = 0.35,
+                    ['Berserker'] = 0.4,
                     ['Paladin'] = 0.2,
         
                     ['Demon'] = 0.35,
@@ -1201,7 +1195,7 @@ else
                 end
 
                 function GetMobPos()
-                    local closesDistance = 100
+                    local closesDistance = 50
                     local closestTarget = nil
 
                     if GetObjectPos() then
@@ -1222,9 +1216,9 @@ else
                             end
                         end
 
-                        if closestTarget then
-                            Window:set_status('Attack: '..(require(game.ReplicatedStorage.Shared.Mobs.Mobs[closestTarget.Name]).NameTag))
-                        end
+                        -- if closestTarget then
+                        --     Window:set_status('Attack: '..(require(game.ReplicatedStorage.Shared.Mobs.Mobs[closestTarget.Name]).NameTag))
+                        -- end
 
                         return (closestTarget and closestTarget:FindFirstChild('Collider') and closestTarget.Collider.Position) or false
                     end
@@ -1436,13 +1430,13 @@ else
                             end
 
                             if attack == AttackTypes[skilltype][#AttackTypes[skilltype]] then break end
-                            task.wait(0.035)
+                            task.wait(0.05)
                         end
                     end
                 end
 
                 task.defer(function()
-                    while Settings['KillAura'] and task.wait(0.05) do
+                    while Settings['KillAura'] and task.wait(0.1) do
                         if not require(game.ReplicatedStorage.Client.Actions):IsMounted() then
                             local mobpos = GetMobPos()
                             if mobpos then

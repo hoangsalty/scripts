@@ -5,7 +5,7 @@ game.CoreGui.RobloxPromptGui.promptOverlay.DescendantAdded:Connect(function()
     if GUI then
         local Reason = GUI.TitleFrame.ErrorTitle.Text
         if Reason == 'Disconnected' or Reason:find('Server Kick') or Reason:find('GameEnded') or Reason:find('Teleport Failed') then
-            warn("Rejoin")
+            warn("Kicked Reason: "..Reason)
 
             game:GetService("TeleportService"):Teleport(2727067538)
 
@@ -307,48 +307,43 @@ else
             }
         end
 
-        AutoFarm:Toggle{
-            Name = 'Daily Quests',
+        AutoFarm:Toggle{Name = 'Daily Quests',
             StartingState = Settings['FarmDailyQuest'],
             Description = nil,
             Callback = function(state)
                 Settings['FarmDailyQuest'] = state
                 Save()
             end
-        }:SetState(Settings['FarmDailyQuest'])
+        }
 
-        AutoFarm:Toggle{
-            Name = 'World Quests',
+        AutoFarm:Toggle{Name = 'World Quests',
             StartingState = Settings['FarmWorldQuest'],
             Description = nil,
             Callback = function(state)
                 Settings['FarmWorldQuest'] = state
                 Save()
             end
-        }:SetState(Settings['FarmWorldQuest'])
+        }
 
-        AutoFarm:Toggle{
-            Name = 'Guild Dungeons',
+        AutoFarm:Toggle{Name = 'Guild Dungeons',
             StartingState = Settings['FarmGuildDungeon'],
             Description = nil,
             Callback = function(state)
                 Settings['FarmGuildDungeon'] = state
                 Save()
             end
-        }:SetState(Settings['FarmGuildDungeon'])
+        }
 
-        AutoFarm:Toggle{
-            Name = 'Restart Dungeon',
+        AutoFarm:Toggle{Name = 'Restart Dungeon',
             StartingState = Settings['RestartDungeon'],
             Description = nil,
             Callback = function(state)
                 Settings['RestartDungeon'] = state
                 Save()
             end
-        }:SetState(Settings['RestartDungeon'])
+        }
 
-        AutoFarm:Toggle{
-            Name = 'Start Farm',
+        AutoFarm:Toggle{Name = 'Start Farm',
             StartingState = Settings['StartFarm'],
             Description = nil,
             Callback = function(state)
@@ -356,8 +351,12 @@ else
                 Save()
 
                 if not Settings['StartFarm'] then
-                    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-                    workspace.CurrentCamera.CameraSubject = Character.Humanoid
+                    task.defer(function()
+                        while not Settings['StartFarm'] and task.wait(0.5) do
+                            workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+                            workspace.CurrentCamera.CameraSubject = Character.Humanoid
+                        end
+                    end)
                     
                     if ClientRoot:FindFirstChild('BodyVelocity') then
                         ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,20,0)
@@ -652,20 +651,23 @@ else
                                                 elseif facing == 'behind' then
                                                     ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-12,-5)
                                                 end
+                                                ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                             else
-                                                if ClientClass == 'Summoner' and mob.MobProperties:FindFirstChild('Elite') and mob.MobProperties.Elite.Value == true then
-                                                    if Character.Properties.SummonCount.Value >= 3 and not require(game.ReplicatedStorage.Client.Actions):IsOnCooldown('Skill1') then
-                                                        ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,20,5)
+                                                if ClientClass == 'Summoner' then --and mob.MobProperties:FindFirstChild('Elite') and mob.MobProperties.Elite.Value == true
+                                                    if Character.Properties.SummonCount.Value >= 4 then
+                                                        ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,40,0)
                                                         task.wait(1)
                                                         game.ReplicatedStorage.Shared.Combat.Skillsets.Summoner.Summon:FireServer()
+                                                        task.wait(2)
                                                     else
                                                         ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-20,5)
+                                                        ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                                     end
                                                 else
                                                     ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-20,5)
+                                                    ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                                 end
                                             end
-                                            ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                         end
                                     end
                                 until not mob or not Settings['StartFarm']
@@ -735,9 +737,10 @@ else
                                                             elseif facing == 'behind' then
                                                                 ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-12,-15)
                                                             end
+                                                            ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                         else
                                                             if ClientClass == 'Summoner' then
-                                                                if Character.Properties.SummonCount.Value >= 3 and not require(game.ReplicatedStorage.Client.Actions):IsOnCooldown('Skill1') then
+                                                                if Character.Properties.SummonCount.Value >= 3 then
                                                                     ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,20,5)
                                                                     task.wait(1)
                                                                     if not require(game.ReplicatedStorage.Client.Actions):IsOnCooldown('Ultimate') then
@@ -748,12 +751,13 @@ else
                                                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Summoner.Summon:FireServer()
                                                                 else
                                                                     ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-20,5)
+                                                                    ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                                 end
                                                             else
                                                                 ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-20,5)
+                                                                ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                             end
                                                         end
-                                                        ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                     end
                                                 end
                                             end
@@ -814,7 +818,7 @@ else
         
                         function Tween(target)
                             if target then
-                                local Speed = 0.15
+                                local Speed = 0.35
                                 if not ClientRoot:FindFirstChild('BodyVelocity') then
                                     local bv = Instance.new('BodyVelocity')
                                     bv.Parent = ClientRoot
@@ -1123,47 +1127,56 @@ else
                     end)
                 end
             end
-        }:SetState(Settings['StartFarm'])
+        }
 
-
-
-
+        
     local Features = Window:Tab{Name = 'Features', Icon = 'rbxassetid://8569322835'}
-        Features:Toggle{
-            Name = 'Kill Aura',
+        Features:Toggle{Name = 'Kill Aura',
             StartingState = Settings['KillAura'],
             Description = nil,
             Callback = function(state)
                 Settings['KillAura'] = state
                 Save()
 
-                local ShortRanged = {'Swordmaster','Defender','DualWielder','Guardian','Berserker','Paladin','Demon','Dragoon','Warlord',}
-                local AttackTypes = {
-                    ['Ultimate'] 	= {},
+                local ShortRanged = {
+                    'Swordmaster',
+                    'Defender',
+                    'DualWielder',
+                    'Guardian',
+                    'Berserker',
+                    'Paladin',
+                    'Demon',
+                    'Dragoon',
+                    'Warlord',
+                }
+
+                local AtkType = {
+                    ['Primary'] 	= {},
                     ['Skill1'] 		= {},
                     ['Skill2'] 		= {},
                     ['Skill3'] 		= {},
-                    ['Primary'] 	= {},
+                    ['Ultimate'] 	= {},
                 }
+
                 local Delay = {
-                    ['Mage'] = 0.35,
+                    ['Mage']        = 0.35,
                     ['Swordmaster'] = 0.4,
-                    ['Defender'] = 0.4,
+                    ['Defender']    = 0.4,
         
                     ['IcefireMage'] = 0.4,
                     ['DualWielder'] = 0.4,
-                    ['Guardian'] = 0.4,
+                    ['Guardian']    = 0.4,
         
-                    ['MageOfLight'] = 0.2,
-                    ['Berserker'] = 0.4,
-                    ['Paladin'] = 0.2,
+                    ['MageOfLight'] = {0.2, 0, 0, 0, 0},
+                    ['Berserker']   = 0.35,
+                    ['Paladin']     = 0.2,
         
-                    ['Demon'] = 0.35,
-                    ['Dragoon'] = 0.25,
-                    ['Archer'] = 0.35,
+                    ['Demon']       = 0.35,
+                    ['Dragoon']     = 0.25,
+                    ['Archer']      = 0.35,
 
-                    ['Summoner'] = 0.65,
-                    ['Warlord'] = 0.4,
+                    ['Summoner']    = {0.75, 4, 2, 7, 20},
+                    ['Warlord']     = {0.35, 2.5, 1.5, 6, 20},
                 }
 
                 function GetObjectPos()
@@ -1195,7 +1208,11 @@ else
                 end
 
                 function GetMobPos()
-                    local closesDistance = 50
+                    local closesDistance = 70
+                    if table.find(ShortRanged, ClientClass) then
+                        closesDistance = 30
+                    end
+                    
                     local closestTarget = nil
 
                     if GetObjectPos() then
@@ -1223,274 +1240,279 @@ else
                         return (closestTarget and closestTarget:FindFirstChild('Collider') and closestTarget.Collider.Position) or false
                     end
                 end
-                
-                function IsOnCooldown(name)
-                    return require(game.ReplicatedStorage.Client.Actions):IsOnCooldown(name)
-                end
 
                 function Refill()
                     if ClientClass == 'Mage' then
-                        table.insert(AttackTypes['Primary'], 'Mage1')
+                        table.insert(AtkType['Primary'], 'Mage1')
                         
-                        table.insert(AttackTypes['Skill1'], 'ArcaneBlast')
-                        table.insert(AttackTypes['Skill1'], 'ArcaneBlastAOE')
+                        table.insert(AtkType['Skill1'], 'ArcaneBlast')
+                        table.insert(AtkType['Skill1'], 'ArcaneBlastAOE')
                     
                         for i=1,12 do
-                            table.insert(AttackTypes['Skill2'], 'ArcaneWave'..i)
+                            table.insert(AtkType['Skill2'], 'ArcaneWave'..i)
                         end
                     elseif ClientClass == 'Swordmaster' then
                         for i=1,6 do
-                            table.insert(AttackTypes['Primary'], 'Swordmaster'..i)
+                            table.insert(AtkType['Primary'], 'Swordmaster'..i)
                         end
                     
                         for i=1,2 do
-                            table.insert(AttackTypes['Skill1'], 'CrescentStrike'..i)
+                            table.insert(AtkType['Skill1'], 'CrescentStrike'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill2'], 'Leap')
+                        table.insert(AtkType['Skill2'], 'Leap')
                     elseif ClientClass == 'Defender' then
                         for i=1,5 do
-                            table.insert(AttackTypes['Primary'], 'Defender'..i)
+                            table.insert(AtkType['Primary'], 'Defender'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill1'], 'Groundbreaker')
+                        table.insert(AtkType['Skill1'], 'Groundbreaker')
                     
                         for i=1,4 do
-                            table.insert(AttackTypes['Skill2'], 'Spin'..i)
+                            table.insert(AtkType['Skill2'], 'Spin'..i)
                         end
                     elseif ClientClass == 'IcefireMage' then
-                        table.insert(AttackTypes['Primary'], 'IcefireMage1')
+                        table.insert(AtkType['Primary'], 'IcefireMage1')
                         
                         for i=1,5 do
-                            table.insert(AttackTypes['Skill1'], 'IcySpikes'..i)
+                            table.insert(AtkType['Skill1'], 'IcySpikes'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill2'], 'IcefireMageFireballBlast')
-                        table.insert(AttackTypes['Skill2'], 'IcefireMageFireball')
+                        table.insert(AtkType['Skill2'], 'IcefireMageFireballBlast')
+                        table.insert(AtkType['Skill2'], 'IcefireMageFireball')
                     
-                        table.insert(AttackTypes['Skill3'], 'LightningStrike')
+                        table.insert(AtkType['Skill3'], 'LightningStrike')
                     
-                        table.insert(AttackTypes['Ultimate'], 'IcefireMageUltimateFrost')
+                        table.insert(AtkType['Ultimate'], 'IcefireMageUltimateFrost')
                         for i=1,10 do
-                            table.insert(AttackTypes['Ultimate'], 'IcefireMageUltimateMeteor'..i)
+                            table.insert(AtkType['Ultimate'], 'IcefireMageUltimateMeteor'..i)
                         end
                     elseif ClientClass == 'DualWielder' then
                         for i=1,10 do
-                            table.insert(AttackTypes['Primary'], 'DualWield'..i)
+                            table.insert(AtkType['Primary'], 'DualWield'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill2'], 'DashStrike')
+                        table.insert(AtkType['Skill2'], 'DashStrike')
                     
                         for i=1,4 do
-                            table.insert(AttackTypes['Skill3'], 'CrossSlash'..i)
+                            table.insert(AtkType['Skill3'], 'CrossSlash'..i)
                         end
                     
                         for i=1,12 do
-                            table.insert(AttackTypes['Ultimate'], 'DualWieldUltimateSword'..i)
-                            table.insert(AttackTypes['Ultimate'], 'DualWieldUltimateHit'..i)
+                            table.insert(AtkType['Ultimate'], 'DualWieldUltimateSword'..i)
+                            table.insert(AtkType['Ultimate'], 'DualWieldUltimateHit'..i)
                         end
-                        table.insert(AttackTypes['Ultimate'], 'DualWieldUltimateSlam')
+                        table.insert(AtkType['Ultimate'], 'DualWieldUltimateSlam')
                         for i=1,3 do
-                            table.insert(AttackTypes['Ultimate'], 'DualWieldUltimateSlam'..i)
+                            table.insert(AtkType['Ultimate'], 'DualWieldUltimateSlam'..i)
                         end
                     elseif ClientClass == 'Guardian' then
                         for i=1,4 do
-                            table.insert(AttackTypes['Primary'], 'Guardian'..i)
+                            table.insert(AtkType['Primary'], 'Guardian'..i)
                         end
                     
                         for i=1,5 do
-                            table.insert(AttackTypes['Skill2'], 'RockSpikes'..i)
+                            table.insert(AtkType['Skill2'], 'RockSpikes'..i)
                         end
                     
                         for i=1,15 do
-                            table.insert(AttackTypes['Skill3'], 'SlashFury'..i)
+                            table.insert(AtkType['Skill3'], 'SlashFury'..i)
                         end
                     
                         for i=1,12 do
-                            table.insert(AttackTypes['Ultimate'], 'SwordPrison'..i)
+                            table.insert(AtkType['Ultimate'], 'SwordPrison'..i)
                         end
                     elseif ClientClass == 'MageOfLight' then
-                        table.insert(AttackTypes['Primary'], 'MageOfLight')
-                        table.insert(AttackTypes['Primary'], 'MageOfLightCharged')
-                        table.insert(AttackTypes['Primary'], 'MageOfLightBlast')
-                        table.insert(AttackTypes['Primary'], 'MageOfLightBlastCharged')
+                        table.insert(AtkType['Primary'], 'MageOfLight')
+                        table.insert(AtkType['Primary'], 'MageOfLightBlast')
+                        table.insert(AtkType['Primary'], 'MageOfLightCharged')
+                        table.insert(AtkType['Primary'], 'MageOfLightBlastCharged')
                     elseif ClientClass == 'Berserker' then
                         for i=1,6 do
-                            table.insert(AttackTypes['Primary'], 'Berserker'..i)
+                            table.insert(AtkType['Primary'], 'Berserker'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill1'], 'AggroSlam')
+                        table.insert(AtkType['Skill1'], 'AggroSlam')
                     
                         for i=1,8 do
-                            table.insert(AttackTypes['Skill2'], 'GigaSpin'..i)
+                            table.insert(AtkType['Skill2'], 'GigaSpin'..i)
                         end
                     
                         for i=1,2 do
-                            table.insert(AttackTypes['Skill3'], 'Fissure'..i)
+                            table.insert(AtkType['Skill3'], 'Fissure'..i)
                         end
                     elseif ClientClass == 'Paladin' then  
                         for i=1,4 do
-                            table.insert(AttackTypes['Primary'], 'Paladin'..i)
-                            table.insert(AttackTypes['Primary'], 'LightPaladin'..i)
+                            table.insert(AtkType['Primary'], 'Paladin'..i)
+                            table.insert(AtkType['Primary'], 'LightPaladin'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill1'], 'Block')
+                        table.insert(AtkType['Skill1'], 'Block')
                     
                         for i=1,2 do
-                            table.insert(AttackTypes['Skill3'], 'LightThrust'..i)
+                            table.insert(AtkType['Skill3'], 'LightThrust'..i)
                         end
                     elseif ClientClass == 'Demon' then
                         for i=1,25 do
-                            table.insert(AttackTypes['Primary'], 'Demon'..i)
+                            table.insert(AtkType['Primary'], 'Demon'..i)
                         end
                         for i=1,9 do
-                            table.insert(AttackTypes['Primary'], 'DemonDPS'..i)
+                            table.insert(AtkType['Primary'], 'DemonDPS'..i)
                         end
                     
                         for i=1,3 do
-                            table.insert(AttackTypes['Skill2'], 'ScytheThrow'..i)
-                            table.insert(AttackTypes['Skill2'], 'ScytheThrowDPS'..i)
+                            table.insert(AtkType['Skill2'], 'ScytheThrow'..i)
+                            table.insert(AtkType['Skill2'], 'ScytheThrowDPS'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill3'], 'DemonLifeStealAOE')
-                        table.insert(AttackTypes['Skill3'], 'DemonLifeStealDPS')
+                        table.insert(AtkType['Skill3'], 'DemonLifeStealAOE')
+                        table.insert(AtkType['Skill3'], 'DemonLifeStealDPS')
                     elseif ClientClass == 'Dragoon' then
                         for i=1,6 do
-                            table.insert(AttackTypes['Primary'], 'Dragoon'..i)
+                            table.insert(AtkType['Primary'], 'Dragoon'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill1'], 'DragoonDash')
+                        table.insert(AtkType['Skill1'], 'DragoonDash')
                         for i=1,10 do
-                            table.insert(AttackTypes['Skill1'], 'DragoonCross'..i)
+                            table.insert(AtkType['Skill1'], 'DragoonCross'..i)
                         end
                     
                         for i=1,5 do
-                            table.insert(AttackTypes['Skill2'], 'MultiStrike'..i)
+                            table.insert(AtkType['Skill2'], 'MultiStrike'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill3'], 'DragoonFall')
+                        table.insert(AtkType['Skill3'], 'DragoonFall')
                     
-                        table.insert(AttackTypes['Ultimate'], 'DragoonUltimate')
+                        table.insert(AtkType['Ultimate'], 'DragoonUltimate')
                         for i=1,7 do
-                            table.insert(AttackTypes['Ultimate'], 'UltimateDragon'..i)
+                            table.insert(AtkType['Ultimate'], 'UltimateDragon'..i)
                         end
                     elseif ClientClass == 'Archer' then
-                        table.insert(AttackTypes['Primary'], 'Archer')
+                        table.insert(AtkType['Primary'], 'Archer')
                         
                         for i=1,9 do
-                            table.insert(AttackTypes['Skill1'], 'PiercingArrow'..i)
+                            table.insert(AtkType['Skill1'], 'PiercingArrow'..i)
                         end
                     
-                        table.insert(AttackTypes['Skill2'], 'SpiritBomb')
+                        table.insert(AtkType['Skill2'], 'SpiritBomb')
                     
                         for i=1,5 do
-                            table.insert(AttackTypes['Skill3'], 'MortarStrike'..i)
+                            table.insert(AtkType['Skill3'], 'MortarStrike'..i)
                         end
                     
                         for i=1,6 do
-                            table.insert(AttackTypes['Ultimate'], 'HeavenlySword'..i)
+                            table.insert(AtkType['Ultimate'], 'HeavenlySword'..i)
                         end
                     elseif ClientClass == 'Summoner' then
                         for i=1,4 do
-                            table.insert(AttackTypes['Primary'], 'Summoner'..i)
+                            table.insert(AtkType['Primary'], 'Summoner'..i)
                         end
-                    
+
                         for i=1,5 do
-                            table.insert(AttackTypes['Skill3'], 'SoulHarvest'..i)
+                            table.insert(AtkType['Skill3'], 'SoulHarvest'..i)
                         end
                     elseif ClientClass == 'Warlord' then
                         for i=1,4 do
-                            table.insert(AttackTypes['Primary'], 'Warlord'..i)
+                            table.insert(AtkType['Primary'], 'Warlord'..i)
                         end
 
                         for i=1,3 do
-                            table.insert(AttackTypes['Skill1'], 'Piledriver'..i)
+                            table.insert(AtkType['Skill1'], 'Piledriver'..i)
                         end
 
-                        table.insert(AttackTypes['Skill2'], 'BlockingWarlord')
+                        table.insert(AtkType['Skill2'], 'BlockingWarlord')
 
-                        table.insert(AttackTypes['Skill3'], 'ChainsOfWar')
+                        table.insert(AtkType['Skill3'], 'ChainsOfWar')
 
                         for i=1,4 do
-                            table.insert(AttackTypes['Ultimate'], 'WarlordUltimate'..i)
+                            table.insert(AtkType['Ultimate'], 'WarlordUltimate'..i)
                         end
                     end
                 end
+                Refill()
 
-                function AttackTarget(skilltype, pos)
-                    if #AttackTypes[skilltype] > 0 and not IsOnCooldown(skilltype) then
-                        require(game.ReplicatedStorage.Client.Actions):FireCooldown(skilltype)
-                        require(game.ReplicatedStorage.Client.Actions):FireSkillUsedSignal(skilltype)
-                        
-                        for _,attack in next, AttackTypes[skilltype] do
+                function LoopAttack(skilltype)
+                    -- local mobpos = GetMobPos()
+                    -- local mob, pos = require(game.ReplicatedStorage.Shared.Combat):GetInRadius(mobpos, 50, 50, nil, nil, Character);
+                    -- require(game.ReplicatedStorage.Shared.Combat):ValidateTargets(Character, mob, pos);
+
+                    local mob = require(game.ReplicatedStorage.Client.Actions):GetNearestTarget(50, Character)
+                    local mobpos = mob and mob.PrimaryPart and mob.PrimaryPart.Position
+
+                    if mobpos and not require(game.ReplicatedStorage.Client.Actions):IsMounted() then                        
+                        for index, attack in next, AtkType[skilltype] do
                             if table.find(ShortRanged, ClientClass) then
-                                game.ReplicatedStorage.Shared.Combat.Attack:FireServer(attack, ClientRoot.CFrame.p, (pos - ClientRoot.Position).Unit)
+                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, ClientRoot.Position, (mobpos - ClientRoot.Position).Unit)
                             else
-                                game.ReplicatedStorage.Shared.Combat.Attack:FireServer(attack, pos)
+                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, mobpos)
                             end
 
-                            if attack == AttackTypes[skilltype][#AttackTypes[skilltype]] then break end
+                            if attack == AtkType[skilltype][#AtkType[skilltype]] then break end
                             task.wait(0.05)
                         end
                     end
                 end
 
-                task.defer(function()
-                    while Settings['KillAura'] and task.wait(0.1) do
-                        if not require(game.ReplicatedStorage.Client.Actions):IsMounted() then
-                            local mobpos = GetMobPos()
-                            if mobpos then
-                                if #AttackTypes['Primary'] <= 0 then
-                                    Refill()
-                                end
-                                
-                                if #AttackTypes['Ultimate'] > 0 and not IsOnCooldown('Ultimate') then
-                                    AttackTarget('Ultimate', mobpos)
-                                elseif #AttackTypes['Ultimate'] <= 0 or IsOnCooldown('Ultimate') then
+                local primary = AtkType['Primary']
+                local skill1 = AtkType['Skill1']
+                local skill2 = AtkType['Skill2']
+                local skill3 = AtkType['Skill3']
+                local ult = AtkType['Ultimate']
 
-                                    if #AttackTypes['Skill1'] > 0 and not IsOnCooldown('Skill1') then
-                                        AttackTarget('Skill1', mobpos)
-                                    elseif #AttackTypes['Skill1'] <= 0 or IsOnCooldown('Skill1') then
-
-                                        if #AttackTypes['Skill2'] > 0 and not IsOnCooldown('Skill2') then
-                                            AttackTarget('Skill2', mobpos)
-                                        elseif #AttackTypes['Skill2'] <= 0 or IsOnCooldown('Skill2') then
-
-                                            if #AttackTypes['Skill3'] > 0 and not IsOnCooldown('Skill3') then
-                                                AttackTarget('Skill3', mobpos)
-                                            elseif #AttackTypes['Skill3'] <= 0 or IsOnCooldown('Skill3') then
-
-                                                if #AttackTypes['Primary'] > 0 and not IsOnCooldown('Primary') then
-                                                    AttackTarget('Primary', mobpos)
-                                                    task.wait(Delay[ClientClass])
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
-                            end
+                if #primary > 0 then
+                    task.defer(function()
+                        while Settings['KillAura'] and task.wait() do
+                            LoopAttack('Primary')
+                            task.wait(Delay[ClientClass][1])
                         end
-                    end
-                end)
+                    end)
+                end
+
+                if #skill1 > 0 then
+                    task.defer(function()
+                        while Settings['KillAura'] and task.wait() do
+                            LoopAttack('Skill1')
+                            task.wait(Delay[ClientClass][2])
+                        end
+                    end)
+                end
+
+                if #skill2 > 0 then
+                    task.defer(function()
+                        while Settings['KillAura'] and task.wait() do
+                            LoopAttack('Skill2')
+                            task.wait(Delay[ClientClass][3])
+                        end
+                    end)
+                end
+
+                if #skill3 > 0 then
+                    task.defer(function()
+                        while Settings['KillAura'] and task.wait() do
+                            LoopAttack('Skill3')
+                            task.wait(Delay[ClientClass][4])
+                        end
+                    end)
+                end
+
+                if #ult > 0 then
+                    task.defer(function()
+                        while Settings['KillAura'] and task.wait() do
+                            LoopAttack('Ultimate')
+                            task.wait(Delay[ClientClass][5])
+                        end
+                    end)
+                end
 
                 task.defer(function()
                     while Settings['KillAura'] and task.wait(0.1) do
                         if not require(game.ReplicatedStorage.Client.Actions):IsMounted() then
-                            if GetMobPos() then
-                                game.ReplicatedStorage.Shared.Combat.Skillsets.DualWielder.AttackBuff:FireServer()
-
-                                if ClientClass == 'Berserker' and not IsOnCooldown('Ultimate') then
-                                    require(game.ReplicatedStorage.Client.Actions):FireCooldown('Ultimate')
-                                    game.ReplicatedStorage.Shared.Combat.Skillsets.Berserker.Ultimate:FireServer()
-                                end
-                            end
-
                             if Character:WaitForChild('HealthProperties').Health.Value < Character:WaitForChild('HealthProperties').MaxHealth.Value then
                                 if ClientClass == 'Demon' then
                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Demon.LifeSteal:FireServer(workspace.Mobs:GetChildren())
-                                elseif ClientClass == 'MageOfLight' then
-                                    game.ReplicatedStorage.Shared.Combat.Skillsets.MageOfLight.HealCircle:FireServer()
-                                    game.ReplicatedStorage.Shared.Combat.Skillsets.MageOfLight.Barrier:FireServer(Client)
+                                -- elseif ClientClass == 'MageOfLight' then
+                                --     game.ReplicatedStorage.Shared.Combat.Skillsets.MageOfLight.HealCircle:FireServer()
+                                --     game.ReplicatedStorage.Shared.Combat.Skillsets.MageOfLight.Barrier:FireServer(Client)
                                 elseif ClientClass == 'Paladin' then
                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Paladin.GuildedLight:FireServer()
                                 end
@@ -1512,10 +1534,9 @@ else
                     end
                 end)
             end
-        }:SetState(Settings['KillAura'])
+        }
 
-        Features:Toggle{
-            Name = 'Coin Magnets',
+        Features:Toggle{Name = 'Coin Magnets',
             StartingState = Settings['PickUp'],
             Description = nil,
             Callback = function(state)
@@ -1540,10 +1561,9 @@ else
                     end
                 end)
             end
-        }:SetState(Settings['PickUp'])
+        }
 
-        Features:Toggle{
-            Name = 'Upgrade Equipped',
+        Features:Toggle{Name = 'Upgrade Equipped',
             StartingState = false,
             Description = nil,
             Callback = function(upgrade)
@@ -1562,10 +1582,9 @@ else
                     end
                 end)
             end
-        }:SetState(false)
+        }
 
-        Features:Slider{
-            Name = 'Sprint Speed',
+        Features:Slider{Name = 'Sprint Speed',
             Default = 30,
             Min = 30,
             Max = 100,
@@ -1576,29 +1595,26 @@ else
 
     local Inventory = Window:Tab{Name = 'Inventory', Icon = 'rbxassetid://4483345998'}
         for i=1,4 do
-            Inventory:Toggle{
-                Name = 'Sell Tier'..tostring(i),
+            Inventory:Toggle{Name = 'Sell Tier'..tostring(i),
                 StartingState = Settings['SellTier'..tostring(i)],
                 Description = nil,
                 Callback = function(state)
                     Settings['SellTier'..tostring(i)] = state
                     Save()
                 end
-            }:SetState(Settings['SellTier'..tostring(i)])
+            }
         end
 
-        Inventory:Toggle{
-            Name = 'Sell Egg',
+        Inventory:Toggle{Name = 'Sell Egg',
             StartingState = Settings['SellEgg'],
             Description = nil,
             Callback = function(state)
                 Settings['SellEgg'] = state
                 Save()
             end
-        }:SetState(Settings['SellEgg'])
+        }
 
-        Inventory:Button{
-            Name = 'Quick Sell',
+        Inventory:Button{Name = 'Quick Sell',
             Description = nil,
             Callback = function()
                 local sellTable = {}
@@ -1625,25 +1641,23 @@ else
             end
         }
 
-        Inventory:Toggle{
-            Name = 'Auto Equip',
+        Inventory:Toggle{Name = 'Auto Equip',
             StartingState = Settings['AutoEquip'],
             Description = nil,
             Callback = function(state)
                 Settings['AutoEquip'] = state
                 Save()
             end
-        }:SetState(Settings['AutoEquip'])
+        }
 
-        Inventory:Toggle{
-            Name = 'Auto Sell',
+        Inventory:Toggle{Name = 'Auto Sell',
             StartingState = Settings['AutoSell'],
             Description = nil,
             Callback = function(state)
                 Settings['AutoSell'] = state
                 Save()
             end
-        }:SetState(Settings['AutoSell'])
+        }
 
         ClientProfile.Inventory.Items.ChildAdded:Connect(function(v)
             if Settings['AutoEquip'] then
@@ -1697,36 +1711,29 @@ else
             end
         end)
 
-
-
-
     local Misc = Window:Tab{Name = 'Misc', Icon = 'rbxassetid://3610245066'}
-        Misc:Button{
-            Name = 'Bank Menu',
+        Misc:Button{Name = 'Bank Menu',
             Description = nil,
             Callback = function()
                 require(game.ReplicatedStorage.Client.Gui.GuiScripts.Bank):Open()
             end
         }
 
-        Misc:Button{
-            Name = 'Dungeons Menu',
+        Misc:Button{Name = 'Dungeons Menu',
             Description = nil,
             Callback = function()
                 require(game.ReplicatedStorage.Client.Gui.GuiScripts.MissionSelect):Open()
             end
         }
 
-        Misc:Button{
-            Name = 'Worlds Menu',
+        Misc:Button{Name = 'Worlds Menu',
             Description = nil,
             Callback = function()
                 require(game.ReplicatedStorage.Client.Gui.GuiScripts.WorldTeleport):Open()
             end
         }
 
-        Misc:Dropdown{
-            Name = 'Egg Info',
+        Misc:Dropdown{Name = 'Egg Info',
             StartingText = 'Select...',
             Description = nil,
             Items = {'StarEgg','JungleEgg','CrystalEgg','DesertEgg','ChristmasEgg','MoltenEgg','OceanEgg','SkyEgg','CatEgg','CatEggHalloween'},
@@ -1735,8 +1742,7 @@ else
             end
         }
         
-        Misc:Toggle{
-            Name = 'Feed Pet',
+        Misc:Toggle{Name = 'Feed Pet',
             StartingState = false,
             Description = nil,
             Callback = function(feedpet)        
@@ -1750,10 +1756,9 @@ else
                     end
                 end)
             end
-        }:SetState(false)
+        }
 
-        Misc:Button{
-            Name = 'Collect Battlepass',
+        Misc:Button{Name = 'Collect Battlepass',
             Description = nil,
             Callback = function()
                 for i=1,40 do
@@ -1764,8 +1769,7 @@ else
             end
         }
 
-        Misc:Textbox{
-            Name = 'Spin Wheel',
+        Misc:Textbox{Name = 'Spin Wheel',
             Callback = function(text)
                 for i=1,tonumber(text) do
                     require(game.ReplicatedStorage.Shared.EventSpinner).SPINNER_TIMER = 0

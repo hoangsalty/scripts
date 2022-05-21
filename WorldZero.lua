@@ -73,7 +73,9 @@ if game.PlaceId == 2727067538 then
                 end,
             }
         }
-        game.ReplicatedStorage.Shared.Teleport.JoinGame:FireServer(game.ReplicatedStorage.ProfileCollections[game.Players.LocalPlayer.Name].LastProfile.Value)
+        while task.wait(2) do
+            game.ReplicatedStorage.Shared.Teleport.JoinGame:FireServer(game.ReplicatedStorage.ProfileCollections[game.Players.LocalPlayer.Name].LastProfile.Value)
+        end
     else
         Window:Prompt{
             Followup = false,
@@ -107,10 +109,8 @@ else
         ClientRoot = Character:WaitForChild('HumanoidRootPart')
     end)
 
-    if getconnections then
-        for _, v in next, getconnections(Client.Idled) do
-            v:Disable()
-        end
+    for i,v in next, getconnections(game:GetService("Players").LocalPlayer.Idled) do
+        v:Disable()
     end
 
     workspace.ChildAdded:Connect(function(v)
@@ -350,14 +350,7 @@ else
                 Settings['StartFarm'] = state
                 Save()
 
-                if not Settings['StartFarm'] then
-                    task.defer(function()
-                        while not Settings['StartFarm'] and task.wait(0.5) do
-                            workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-                            workspace.CurrentCamera.CameraSubject = Character.Humanoid
-                        end
-                    end)
-                    
+                if not Settings['StartFarm'] then                    
                     if ClientRoot:FindFirstChild('BodyVelocity') then
                         ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,20,0)
                         task.wait(0.1)
@@ -818,7 +811,7 @@ else
         
                         function Tween(target)
                             if target then
-                                local Speed = 0.35
+                                local Speed = 0.5
                                 if not ClientRoot:FindFirstChild('BodyVelocity') then
                                     local bv = Instance.new('BodyVelocity')
                                     bv.Parent = ClientRoot
@@ -828,7 +821,7 @@ else
                                 end
         
                                 if (ClientRoot.Position - target.Position).magnitude > 15 then
-                                    ClientRoot.CFrame = CFrame.new(ClientRoot.Position + ((target.Position + Vector3.new(0,-15,0)) - ClientRoot.Position).unit * Speed)
+                                    ClientRoot.CFrame = CFrame.new(ClientRoot.Position + (target.Position - ClientRoot.Position).unit * Speed)
                                 else
                                     ClientRoot.CFrame = target.CFrame + Vector3.new(0,-12,5)
                                     ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(target.Position.X, ClientRoot.Position.Y, target.Position.Z))
@@ -1167,12 +1160,12 @@ else
                     ['DualWielder'] = 0.4,
                     ['Guardian']    = 0.4,
         
-                    ['MageOfLight'] = {0.2, 0, 0, 0, 0},
+                    ['MageOfLight'] = {0.3, 0, 0, 0, 0},
                     ['Berserker']   = 0.35,
-                    ['Paladin']     = 0.2,
+                    ['Paladin']     = 0.3,
         
                     ['Demon']       = 0.35,
-                    ['Dragoon']     = 0.25,
+                    ['Dragoon']     = 0.3,
                     ['Archer']      = 0.35,
 
                     ['Summoner']    = {0.75, 4, 2, 7, 20},
@@ -1208,15 +1201,11 @@ else
                 end
 
                 function GetMobPos()
-                    local closesDistance = 70
-                    if table.find(ShortRanged, ClientClass) then
-                        closesDistance = 30
-                    end
-                    
                     local closestTarget = nil
+                    local closesDistance = 50
 
                     if GetObjectPos() then
-                        Window:set_status('Attack: Object')
+                        -- Window:set_status('Attack: Object')
                         return GetObjectPos()
                     else
                         for i,v in next, workspace.Mobs:GetChildren() do
@@ -1239,6 +1228,27 @@ else
 
                         return (closestTarget and closestTarget:FindFirstChild('Collider') and closestTarget.Collider.Position) or false
                     end
+                end
+
+                function GetTarget()
+                    local mob, pos = require(game.ReplicatedStorage.Shared.Combat):GetInRadius(ClientRoot.Position, 50, 50, false, false, Character)
+                    require(game.ReplicatedStorage.Shared.Combat):ValidateTargets(Character, mob, pos)
+
+                    local closest = nil
+                    local maxDistance = 999
+
+                    for i,v in next, mob do
+                        local valid_pos, valid_mob = require(game.ReplicatedStorage.Shared.Mobs):GetClosestTargetPosition(v)
+                        if valid_pos then
+                            local currentDistance = (valid_pos - ClientRoot.Position).magnitude
+                            if v.PrimaryPart and currentDistance < maxDistance then
+                                currentDistance = maxDistance
+                                closest = v
+                            end
+                        end
+                    end
+
+                    return closest
                 end
 
                 function Refill()
@@ -1432,23 +1442,19 @@ else
                 Refill()
 
                 function LoopAttack(skilltype)
-                    -- local mobpos = GetMobPos()
-                    -- local mob, pos = require(game.ReplicatedStorage.Shared.Combat):GetInRadius(mobpos, 50, 50, nil, nil, Character);
-                    -- require(game.ReplicatedStorage.Shared.Combat):ValidateTargets(Character, mob, pos);
+                    local mob = GetTarget()
+                    local pos = mob and mob.PrimaryPart and mob.PrimaryPart.Position
 
-                    local mob = require(game.ReplicatedStorage.Client.Actions):GetNearestTarget(50, Character)
-                    local mobpos = mob and mob.PrimaryPart and mob.PrimaryPart.Position
-
-                    if mobpos and not require(game.ReplicatedStorage.Client.Actions):IsMounted() then                        
-                        for index, attack in next, AtkType[skilltype] do
+                    if pos and not require(game.ReplicatedStorage.Client.Actions):IsMounted() then                        
+                        for index,attack in next, AtkType[skilltype] do
                             if table.find(ShortRanged, ClientClass) then
-                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, ClientRoot.Position, (mobpos - ClientRoot.Position).Unit)
+                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, ClientRoot.Position, (pos - ClientRoot.Position).Unit)
                             else
-                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, mobpos)
+                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, pos)
                             end
 
                             if attack == AtkType[skilltype][#AtkType[skilltype]] then break end
-                            task.wait(0.05)
+                            task.wait(0.035)
                         end
                     end
                 end

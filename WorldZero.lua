@@ -629,9 +629,9 @@ else
                                         else                                            
                                             if table.find(ShortRanged, ClientClass) then
                                                 if facing == 'infront' then
-                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-12,5)
+                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-10,5)
                                                 elseif facing == 'behind' then
-                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-12,-5)
+                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-10,-5)
                                                 end
                                                 ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                             else
@@ -711,9 +711,9 @@ else
                                                     else
                                                         if table.find(ShortRanged, ClientClass) then
                                                             if facing == 'infront' then
-                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-12,15)
+                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-10,15)
                                                             elseif facing == 'behind' then
-                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-12,-15)
+                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-10,-15)
                                                             end
                                                             ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                         else
@@ -793,22 +793,48 @@ else
                             end
                         end
         
+                        -- function Tween(target)
+                        --     if target then
+                        --         local Speed = 0.35
+                        --         if not ClientRoot:FindFirstChild('BodyVelocity') then
+                        --             local bv = Instance.new('BodyVelocity')
+                        --             bv.Parent = ClientRoot
+                        --             bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+                        --             bv.Velocity = Vector3.new(0,0,0)
+                        --             ClientRoot.CanCollide = false
+                        --         end
+        
+                        --         if (ClientRoot.Position - (target.Position - Vector3.new(0,12,0))).magnitude > 15 then
+                        --             ClientRoot.CFrame = CFrame.new(ClientRoot.Position + ((target.Position - Vector3.new(0,12,0)) - ClientRoot.Position).unit * Speed)
+                        --         else
+                        --             ClientRoot.CFrame = target.CFrame + Vector3.new(0,-12,5)
+                        --             ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(target.Position.X, ClientRoot.Position.Y, target.Position.Z))
+                        --         end
+
+                        --     end
+                        -- end
+
                         function Tween(target)
                             if target then
-                                local Speed = 0.25
-                                if not ClientRoot:FindFirstChild('BodyVelocity') then
-                                    local bv = Instance.new('BodyVelocity')
-                                    bv.Parent = ClientRoot
-                                    bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
-                                    bv.Velocity = Vector3.new(0,0,0)
-                                    ClientRoot.CanCollide = false
+                                if not ClientRoot:FindFirstChild("BodyVelocity") then
+                                    local BV = Instance.new("BodyVelocity", ClientRoot)
+                                    BV.velocity = Vector3.new()
+                                    BV.MaxForce = Vector3.new(0,math.huge,0)
                                 end
-        
-                                if (ClientRoot.Position - (target.Position - Vector3.new(0,-12,0))).magnitude > 15 then
-                                    ClientRoot.CFrame = CFrame.new(ClientRoot.Position + ((target.Position - Vector3.new(0,-12,0)) - ClientRoot.Position).unit * Speed)
-                                else
-                                    ClientRoot.CFrame = target.CFrame + Vector3.new(0,-12,5)
-                                    ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(target.Position.X, ClientRoot.Position.Y, target.Position.Z))
+
+                                local steps = (ClientRoot.Position - target.Position).magnitude
+                                local startCFrame = ClientRoot.CFrame
+                                local endCFrame = target.CFrame + Vector3.new(0,-12,0)
+                                local speed = 0.6
+                                for i = 0, steps, speed do
+                                    if (ClientRoot.Position - target.Position).magnitude > 15 then
+                                        ClientRoot.CanCollide = false
+                                        ClientRoot.CFrame = startCFrame:lerp(endCFrame, i/steps)
+                                        game:GetService("RunService").Heartbeat:wait()
+                                    else
+                                        ClientRoot.CFrame = target.CFrame + Vector3.new(0,-12,5)
+                                        ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(target.Position.X, ClientRoot.Position.Y, target.Position.Z))
+                                    end
                                 end
                             end
                         end
@@ -1146,77 +1172,19 @@ else
                     ['Paladin']     = 0.3,
         
                     ['Demon']       = 0.35,
-                    ['Dragoon']     = 0.3,
+                    ['Dragoon']     = {0.3, 5, 5, 5, 25},
                     ['Archer']      = 0.35,
 
                     ['Summoner']    = {0.7, 4, 2, 7, 20},
                     ['Warlord']     = {0.35, 2.5, 1.5, 6, 20},
                 }
 
-                function GetObjectPos()
-                    if workspace:FindFirstChild('MissionObjects') then
-                        for i,v in next, workspace.MissionObjects:GetChildren() do
-                            if v.Name == 'IceBarricade' and v.PrimaryPart and IsAlive(v) then
-                                return v.PrimaryPart.Position
-                            elseif v.Name == 'SpikeCheckpoints' or v.Name == 'TowerLegs' then
-                                for i1,v1 in next, v:GetChildren() do
-                                    if v1.PrimaryPart and v1:FindFirstChild('HealthProperties') and v1.HealthProperties.Health.Value > 0 then
-                                        return v1.PrimaryPart.Position
-                                    end
-                                end
-                            end
-                        end
-        
-                        for i,v in next, workspace:GetChildren() do
-                            if (v.Name:find('Pillar') or v.Name == 'Gate' or v.Name == 'TriggerBarrel') and v.PrimaryPart and IsAlive(v) then
-                                return v.PrimaryPart.Position
-                            elseif v.Name == 'FearNukes' then
-                                for i1,v1 in next, v:GetChildren() do
-                                    if v1.PrimaryPart and IsAlive(v1) then
-                                        return v1.PrimaryPart.Position
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-
-                function GetMobPos()
-                    local closestTarget = nil
-                    local closesDistance = 50
-
-                    if GetObjectPos() then
-                        -- Window:set_status('Attack: Object')
-                        return GetObjectPos()
-                    else
-                        for i,v in next, workspace.Mobs:GetChildren() do
-                            if IsAlive(v) and v:FindFirstChild('Collider') then
-                                local mobData = require(game.ReplicatedStorage.Shared.Mobs):GetMobData(v)
-                                if mobData and not mobData.Invincible then
-                                    local currentDistance = (ClientRoot.Position - v.Collider.Position).magnitude
-
-                                    if currentDistance < closesDistance then
-                                        closesDistance = currentDistance
-                                        closestTarget = v
-                                    end
-                                end
-                            end
-                        end
-
-                        -- if closestTarget then
-                        --     Window:set_status('Attack: '..(require(game.ReplicatedStorage.Shared.Mobs.Mobs[closestTarget.Name]).NameTag))
-                        -- end
-
-                        return (closestTarget and closestTarget:FindFirstChild('Collider') and closestTarget.Collider.Position) or false
-                    end
-                end
-
                 function GetTargetPos()
-                    local mob, pos = require(game.ReplicatedStorage.Shared.Combat):GetInRadius(ClientRoot.Position, 50, 50, false, false, Character)
+                    local mob, pos = require(game.ReplicatedStorage.Shared.Combat):GetInRadius(ClientRoot.Position, 100, 50, nil, nil, Character)
                     require(game.ReplicatedStorage.Shared.Combat):ValidateTargets(Character, mob, pos)
 
                     local closestPos = nil
-                    local maxDistance = math.huge
+                    local maxDistance = 999
 
                     for i,v in next, mob do
                         local valid_pos, valid_mob = require(game.ReplicatedStorage.Shared.Mobs):GetClosestTargetPosition(v)
@@ -1502,7 +1470,7 @@ else
                                 end
                             end
                                                     
-                            if GetMobPos() and ClientClass == 'Demon' and InDungeon then
+                            if GetTargetPos() and ClientClass == 'Demon' and InDungeon then
                                 for i=1,27 do
                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Demon.Demonic:FireServer()
                                 end

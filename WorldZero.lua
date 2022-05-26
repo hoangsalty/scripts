@@ -352,27 +352,16 @@ else
 
                 if not Settings['StartFarm'] then                    
                     if ClientRoot:FindFirstChild('BodyVelocity') then
-                        ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,20,0)
+                        ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,30,0)
                         task.wait(0.1)
                         ClientRoot.BodyVelocity:Destroy()
                         ClientRoot.CanCollide = true
+                        workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+                        workspace.CurrentCamera.CameraSubject = Character.Humanoid
                     end
 
                     Window:set_status('Status: Idle')
                 else
-                    if not InDungeon then
-                        if not ClientRoot:FindFirstChild('BodyVelocity') then
-                            local bv = Instance.new('BodyVelocity')
-                            bv.Parent = ClientRoot
-                            bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
-                            bv.Velocity = Vector3.new()
-                            ClientRoot.CanCollide = false
-                        end
-
-                        ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,-20,0)
-                        task.wait(1)
-                    end
-
                     function QuestFinished(QuestID)
                         return require(game.ReplicatedStorage.Shared.Quests):QuestCompleted(Client, QuestID)
                     end
@@ -550,7 +539,6 @@ else
                             end
                 
                             if workspace:FindFirstChild('MissionObjects') then
-                                
                                 if workspace:FindFirstChild('KillerParts') then
                                     workspace.KillerParts:Destroy()
                                 elseif workspace:FindFirstChild('CheckpointTriggers') then
@@ -613,7 +601,8 @@ else
                                 end
                             end
                         end
-        
+                        Trigger()
+
                         local object = GetObject()
                         local mob = GetMob()
                         local boss = GetBoss()
@@ -646,7 +635,7 @@ else
                                                 end
                                                 ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                             else
-                                                if ClientClass == 'Summoner' then --and mob.MobProperties:FindFirstChild('Elite') and mob.MobProperties.Elite.Value == true
+                                                if ClientClass == 'Summoner' then
                                                     if Character.Properties.SummonCount.Value >= 4 then
                                                         ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,40,0)
                                                         task.wait(1)
@@ -670,19 +659,15 @@ else
                             else
                                 if boss then
                                     repeat task.wait()
-                                        if (
-                                            GetObject()
+                                        if (GetObject()
                                             or GetMob() 
                                             or not boss.Parent 
                                             or not boss:FindFirstChild('Collider') 
                                             or (boss.FromSpawnPart.Value ~= nil and boss.FromSpawnPart.Value:FindFirstChild('Invincible') ~= nil) 
                                             or (bossPos ~= nil and boss.Collider.Position.Y < bossPos - 20) 
                                             or boss.MobProperties.Busy:FindFirstChild('Before') 
-                                            or workspace:FindFirstChild('GreaterTreeShield') 
-                                        ) then
-                                            workspace.CurrentCamera.CameraSubject = Character
-                                            break
-                                        elseif not IsAlive(Character) then
+                                            or workspace:FindFirstChild('GreaterTreeShield')
+                                            or not IsAlive(Character)) then
                                             break
                                         end
                                         
@@ -734,7 +719,7 @@ else
                                                         else
                                                             if ClientClass == 'Summoner' then
                                                                 if Character.Properties.SummonCount.Value >= 3 then
-                                                                    ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,20,5)
+                                                                    ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,30,5)
                                                                     task.wait(1)
                                                                     if not require(game.ReplicatedStorage.Client.Actions):IsOnCooldown('Ultimate') then
                                                                         require(game.ReplicatedStorage.Client.Actions):FireCooldown('Ultimate')
@@ -759,7 +744,6 @@ else
                                 end
                             end
                         end
-                        Trigger()
                     end
                 
                     function FarmOpenWorld(target)
@@ -811,7 +795,7 @@ else
         
                         function Tween(target)
                             if target then
-                                local Speed = 0.5
+                                local Speed = 0.25
                                 if not ClientRoot:FindFirstChild('BodyVelocity') then
                                     local bv = Instance.new('BodyVelocity')
                                     bv.Parent = ClientRoot
@@ -820,8 +804,8 @@ else
                                     ClientRoot.CanCollide = false
                                 end
         
-                                if (ClientRoot.Position - target.Position).magnitude > 15 then
-                                    ClientRoot.CFrame = CFrame.new(ClientRoot.Position + (target.Position - ClientRoot.Position).unit * Speed)
+                                if (ClientRoot.Position - (target.Position - Vector3.new(0,-12,0))).magnitude > 15 then
+                                    ClientRoot.CFrame = CFrame.new(ClientRoot.Position + ((target.Position - Vector3.new(0,-12,0)) - ClientRoot.Position).unit * Speed)
                                 else
                                     ClientRoot.CFrame = target.CFrame + Vector3.new(0,-12,5)
                                     ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(target.Position.X, ClientRoot.Position.Y, target.Position.Z))
@@ -836,9 +820,6 @@ else
 
                         if bossFlag then
                             game.ReplicatedStorage.Shared.WorldEvents.TeleportToEvent:FireServer(bossFlag)
-                            task.wait(5)
-                            ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,-30,0)
-                            repeat task.wait() until GetWorldBoss()
                         else
                             if worldBoss then
                                 repeat task.wait()
@@ -1168,7 +1149,7 @@ else
                     ['Dragoon']     = 0.3,
                     ['Archer']      = 0.35,
 
-                    ['Summoner']    = {0.75, 4, 2, 7, 20},
+                    ['Summoner']    = {0.7, 4, 2, 7, 20},
                     ['Warlord']     = {0.35, 2.5, 1.5, 6, 20},
                 }
 
@@ -1230,25 +1211,26 @@ else
                     end
                 end
 
-                function GetTarget()
+                function GetTargetPos()
                     local mob, pos = require(game.ReplicatedStorage.Shared.Combat):GetInRadius(ClientRoot.Position, 50, 50, false, false, Character)
                     require(game.ReplicatedStorage.Shared.Combat):ValidateTargets(Character, mob, pos)
 
-                    local closest = nil
-                    local maxDistance = 999
+                    local closestPos = nil
+                    local maxDistance = math.huge
 
                     for i,v in next, mob do
                         local valid_pos, valid_mob = require(game.ReplicatedStorage.Shared.Mobs):GetClosestTargetPosition(v)
-                        if valid_pos then
+                        if valid_pos and valid_mob then
                             local currentDistance = (valid_pos - ClientRoot.Position).magnitude
-                            if v.PrimaryPart and currentDistance < maxDistance then
-                                currentDistance = maxDistance
-                                closest = v
+
+                            if currentDistance < maxDistance then
+                                maxDistance = currentDistance
+                                closestPos = valid_pos
                             end
                         end
                     end
 
-                    return closest
+                    return closestPos
                 end
 
                 function Refill()
@@ -1442,8 +1424,7 @@ else
                 Refill()
 
                 function LoopAttack(skilltype)
-                    local mob = GetTarget()
-                    local pos = mob and mob.PrimaryPart and mob.PrimaryPart.Position
+                    local pos = GetTargetPos()
 
                     if pos and not require(game.ReplicatedStorage.Client.Actions):IsMounted() then                        
                         for index,attack in next, AtkType[skilltype] do
@@ -1454,7 +1435,7 @@ else
                             end
 
                             if attack == AtkType[skilltype][#AtkType[skilltype]] then break end
-                            task.wait(0.035)
+                            task.wait(0.03)
                         end
                     end
                 end
@@ -1516,9 +1497,6 @@ else
                             if Character:WaitForChild('HealthProperties').Health.Value < Character:WaitForChild('HealthProperties').MaxHealth.Value then
                                 if ClientClass == 'Demon' then
                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Demon.LifeSteal:FireServer(workspace.Mobs:GetChildren())
-                                -- elseif ClientClass == 'MageOfLight' then
-                                --     game.ReplicatedStorage.Shared.Combat.Skillsets.MageOfLight.HealCircle:FireServer()
-                                --     game.ReplicatedStorage.Shared.Combat.Skillsets.MageOfLight.Barrier:FireServer(Client)
                                 elseif ClientClass == 'Paladin' then
                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Paladin.GuildedLight:FireServer()
                                 end

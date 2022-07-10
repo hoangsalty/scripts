@@ -39,16 +39,9 @@ local DefaultSettings = {
     ['AutoEquip'] = false,
     ['AutoSell'] = false,
 }
-
-if not pcall(function() readfile(Name) end) then 
-    writefile(Name, game:GetService('HttpService'):JSONEncode(DefaultSettings)) 
-end
-
+if not pcall(function() readfile(Name) end) then writefile(Name, game:GetService('HttpService'):JSONEncode(DefaultSettings)) end
 local Settings = game:GetService('HttpService'):JSONDecode(readfile(Name))
-
-function Save() 
-    writefile(Name, game:GetService('HttpService'):JSONEncode(Settings))
-end
+function Save() writefile(Name, game:GetService('HttpService'):JSONEncode(Settings)) end
 
 local Lib = loadstring(game:HttpGet('https://raw.githubusercontent.com/hoangsalty/roblox_scripts/main/Materials/UISource/Mercury_Lib.lua'))()
 local Window = Lib:Create{
@@ -100,10 +93,6 @@ else
     local ClientClass = ClientProfile:WaitForChild('Class') and ClientProfile.Class.Value
     local InDungeon = require(game.ReplicatedStorage.Shared.Missions):IsMissionPlace()
 
-    function IsAlive(target)
-        return target:FindFirstChild('HealthProperties') and target.HealthProperties:FindFirstChild('Health') and target.HealthProperties.Health.Value > 0
-    end
-
     Client.CameraMaxZoomDistance = 500
     Client.CharacterAdded:Connect(function(Character)
         ClientRoot = Character:WaitForChild('HumanoidRootPart')
@@ -148,10 +137,229 @@ else
         return old_useskill(self, ...)
     end
 
+    --Fill Attack Tables
+    local AtkType = {
+        ['Primary'] 	= {},
+        ['Skill1'] 		= {},
+        ['Skill2'] 		= {},
+        ['Skill3'] 		= {},
+        ['Ultimate'] 	= {},
+    }
+    function Refill(class)
+        if class == 'Mage' then
+            table.insert(AtkType['Primary'], 'Mage1')
+            
+            table.insert(AtkType['Skill1'], 'ArcaneBlast')
+            table.insert(AtkType['Skill1'], 'ArcaneBlastAOE')
+        
+            for i=1,12 do
+                table.insert(AtkType['Skill2'], 'ArcaneWave'..i)
+            end
+        elseif class == 'Swordmaster' then
+            for i=1,6 do
+                table.insert(AtkType['Primary'], 'Swordmaster'..i)
+            end
+        
+            for i=1,2 do
+                table.insert(AtkType['Skill1'], 'CrescentStrike'..i)
+            end
+        
+            table.insert(AtkType['Skill2'], 'Leap')
+        elseif class == 'Defender' then
+            for i=1,5 do
+                table.insert(AtkType['Primary'], 'Defender'..i)
+            end
+        
+            table.insert(AtkType['Skill1'], 'Groundbreaker')
+        
+            for i=1,4 do
+                table.insert(AtkType['Skill2'], 'Spin'..i)
+            end
+        elseif class == 'IcefireMage' then
+            table.insert(AtkType['Primary'], 'IcefireMage1')
+            
+            for i=1,5 do
+                table.insert(AtkType['Skill1'], 'IcySpikes'..i)
+            end
+        
+            table.insert(AtkType['Skill2'], 'IcefireMageFireballBlast')
+            table.insert(AtkType['Skill2'], 'IcefireMageFireball')
+        
+            table.insert(AtkType['Skill3'], 'LightningStrike')
+        
+            table.insert(AtkType['Ultimate'], 'IcefireMageUltimateFrost')
+            for i=1,10 do
+                table.insert(AtkType['Ultimate'], 'IcefireMageUltimateMeteor'..i)
+            end
+        elseif class == 'DualWielder' then
+            for i=1,10 do
+                table.insert(AtkType['Primary'], 'DualWield'..i)
+            end
+        
+            table.insert(AtkType['Skill2'], 'DashStrike')
+        
+            for i=1,4 do
+                table.insert(AtkType['Skill3'], 'CrossSlash'..i)
+            end
+        
+            for i=1,12 do
+                table.insert(AtkType['Ultimate'], 'DualWieldUltimateSword'..i)
+                table.insert(AtkType['Ultimate'], 'DualWieldUltimateHit'..i)
+            end
+            table.insert(AtkType['Ultimate'], 'DualWieldUltimateSlam')
+            for i=1,3 do
+                table.insert(AtkType['Ultimate'], 'DualWieldUltimateSlam'..i)
+            end
+        elseif class == 'Guardian' then
+            for i=1,4 do
+                table.insert(AtkType['Primary'], 'Guardian'..i)
+            end
+        
+            for i=1,5 do
+                table.insert(AtkType['Skill2'], 'RockSpikes'..i)
+            end
+        
+            for i=1,15 do
+                table.insert(AtkType['Skill3'], 'SlashFury'..i)
+            end
+        
+            for i=1,12 do
+                table.insert(AtkType['Ultimate'], 'SwordPrison'..i)
+            end
+        elseif class == 'MageOfLight' then
+            table.insert(AtkType['Primary'], 'MageOfLight')
+            table.insert(AtkType['Primary'], 'MageOfLightBlast')
+            table.insert(AtkType['Primary'], 'MageOfLightCharged')
+            table.insert(AtkType['Primary'], 'MageOfLightBlastCharged')
+        elseif class == 'Berserker' then
+            for i=1,6 do
+                table.insert(AtkType['Primary'], 'Berserker'..i)
+            end
+        
+            table.insert(AtkType['Skill1'], 'AggroSlam')
+        
+            for i=1,8 do
+                table.insert(AtkType['Skill2'], 'GigaSpin'..i)
+            end
+        
+            for i=1,2 do
+                table.insert(AtkType['Skill3'], 'Fissure'..i)
+            end
+        elseif class == 'Paladin' then  
+            for i=1,4 do
+                table.insert(AtkType['Primary'], 'Paladin'..i)
+                table.insert(AtkType['Primary'], 'LightPaladin'..i)
+            end
+        
+            table.insert(AtkType['Skill1'], 'Block')
+        
+            for i=1,2 do
+                table.insert(AtkType['Skill3'], 'LightThrust'..i)
+            end
+        elseif class == 'Demon' then
+            for i=1,25 do
+                table.insert(AtkType['Primary'], 'Demon'..i)
+            end
+            for i=1,9 do
+                table.insert(AtkType['Primary'], 'DemonDPS'..i)
+            end
+        
+            for i=1,3 do
+                table.insert(AtkType['Skill2'], 'ScytheThrow'..i)
+                table.insert(AtkType['Skill2'], 'ScytheThrowDPS'..i)
+            end
+        
+            table.insert(AtkType['Skill3'], 'DemonLifeStealAOE')
+            table.insert(AtkType['Skill3'], 'DemonLifeStealDPS')
+        elseif class == 'Dragoon' then
+            for i=1,6 do
+                table.insert(AtkType['Primary'], 'Dragoon'..i)
+            end
+        
+            table.insert(AtkType['Skill1'], 'DragoonDash')
+            for i=1,10 do
+                table.insert(AtkType['Skill1'], 'DragoonCross'..i)
+            end
+        
+            for i=1,5 do
+                table.insert(AtkType['Skill2'], 'MultiStrike'..i)
+            end
+        
+            table.insert(AtkType['Skill3'], 'DragoonFall')
+        
+            table.insert(AtkType['Ultimate'], 'DragoonUltimate')
+            for i=1,7 do
+                table.insert(AtkType['Ultimate'], 'UltimateDragon'..i)
+            end
+        elseif class == 'Archer' then
+            table.insert(AtkType['Primary'], 'Archer')
+            
+            for i=1,9 do
+                table.insert(AtkType['Skill1'], 'PiercingArrow'..i)
+            end
+        
+            table.insert(AtkType['Skill2'], 'SpiritBomb')
+        
+            for i=1,5 do
+                table.insert(AtkType['Skill3'], 'MortarStrike'..i)
+            end
+        
+            for i=1,6 do
+                table.insert(AtkType['Ultimate'], 'HeavenlySword'..i)
+            end
+        elseif class == 'Summoner' then
+            for i=1,4 do
+                table.insert(AtkType['Primary'], 'Summoner'..i)
+            end
+
+            for i=1,5 do
+                table.insert(AtkType['Skill3'], 'SoulHarvest'..i)
+            end
+        elseif class == 'Warlord' then
+            for i=1,4 do
+                table.insert(AtkType['Primary'], 'Warlord'..i)
+            end
+
+            for i=1,3 do
+                table.insert(AtkType['Skill1'], 'Piledriver'..i)
+            end
+
+            table.insert(AtkType['Skill2'], 'BlockingWarlord')
+
+            table.insert(AtkType['Skill3'], 'ChainsOfWar')
+
+            for i=1,4 do
+                table.insert(AtkType['Ultimate'], 'WarlordUltimate'..i)
+            end
+        end
+    end
+    while task.wait() do
+        Refill(ClientClass)
+        if(#AtkType['Primary'] > 0) then break end
+    end
+
+    --print(#AtkType['Primary'])
+
+    ClientProfile:WaitForChild('Class').Changed:connect(function(class)
+        AtkType['Primary'] = {}
+        AtkType['Skill1'] = {}
+        AtkType['Skill2'] = {}
+        AtkType['Skill3'] = {}
+        AtkType['Ultimate'] = {}
+        task.wait(0.5)
+        Refill(class)
+
+        --print('Class changed to '..class..' | Refill: '..#AtkType['Primary'])
+    end)
+
+    function IsAlive(target)
+        return target:FindFirstChild('HealthProperties') and target.HealthProperties:FindFirstChild('Health') and target.HealthProperties.Health.Value > 0
+    end
+
     --Clear death mobs
     if workspace:FindFirstChild('Mobs') then
         task.defer(function()
-            while task.wait(0.05) do
+            while task.wait() do
                 for i,v in next, workspace.Mobs:GetChildren() do
                     if v:FindFirstChild('Collider') and not IsAlive(v) then
                         v:Destroy()
@@ -166,36 +374,13 @@ else
         4050468028,
         4646473427,
     }
-    local AvoidBehind = {
-        'Slap','Sweep','Piledriver',
-        'BreathFire','FireBreath','Flamethrower',
-        'Attack1Fall','Attack2Fall',
-        'FireWall','Powerslash',
-        'DownwardIceFire',
-    }
-    local facing = 'infront'
     local bossPos
     if workspace:FindFirstChild('Mobs') then
         workspace.Mobs.ChildAdded:Connect(function(mob)
-            if not mob.Name:find('#') and mob:FindFirstChild('Collider') and mob:FindFirstChild('MobProperties') and mob.MobProperties:FindFirstChild('CurrentAttack') then
-
+            if not mob.Name:find('#') and mob:FindFirstChild('Collider') and mob.MobProperties:FindFirstChild('CurrentAttack') then
                 if not table.find(blacklist, game.PlaceId) and require(game.ReplicatedStorage.Shared.Mobs.Mobs[mob.Name]).BossTag ~= false then
                     bossPos = mob.Collider.Position.Y
                 end
-                
-                mob.MobProperties.CurrentAttack.Changed:Connect(function(attack)
-                    --[[if attack ~= '' and attack ~= 'Attack' then
-                        warn(mob.Name, attack)
-                    end]]
-
-                    if table.find(AvoidBehind, attack) then
-                        if facing == 'infront' then
-                            facing = 'behind'
-                        elseif facing == 'behind' then
-                            facing = 'infront'
-                        end
-                    end
-                end)
             end
         end)
     end
@@ -350,16 +535,21 @@ else
                 Settings['StartFarm'] = state
                 Save()
 
-                if not Settings['StartFarm'] then                    
+                if not Settings['StartFarm'] then       
+                    ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,30,0)
+             
                     if ClientRoot:FindFirstChild('BodyVelocity') then
-                        ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,30,0)
-                        task.wait(0.1)
-                        ClientRoot.BodyVelocity:Destroy()
                         ClientRoot.CanCollide = true
-                        workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-                        workspace.CurrentCamera.CameraSubject = Character.Humanoid
+                        ClientRoot.BodyVelocity:Destroy()
                     end
 
+                    task.defer(function()
+                        while not Settings['StartFarm'] and task.wait(0.1) do
+                            if Character then
+                                workspace.CurrentCamera.CameraSubject = Character
+                            end
+                        end
+                    end)
                     Window:set_status('Status: Idle')
                 else
                     function QuestFinished(QuestID)
@@ -431,11 +621,11 @@ else
 
                         function GetObject()
                             for i,v in next, workspace:GetChildren() do
-                                if (v.Name:find('Pillar') or v.Name == 'Gate' or v.Name == 'TriggerBarrel') and v.PrimaryPart and v:FindFirstChild('HealthProperties') and v.HealthProperties.Health.Value > 0 then
+                                if (v.Name:find('Pillar') or v.Name == 'Gate' or v.Name == 'TriggerBarrel') and v.PrimaryPart and IsAlive(v) then
                                     return v
                                 elseif v.Name == 'FearNukes' then
                                     for i1,v1 in next, v:GetChildren() do
-                                        if v1.PrimaryPart and v1:FindFirstChild('HealthProperties') and v1.HealthProperties.Health.Value > 0 then
+                                        if v1.PrimaryPart and IsAlive(v1) then
                                             return v1
                                         end
                                     end
@@ -444,11 +634,11 @@ else
         
                             if workspace:FindFirstChild('MissionObjects') then
                                 for i,v in next, workspace.MissionObjects:GetChildren() do
-                                    if v.Name == 'IceBarricade' and v.PrimaryPart and v:FindFirstChild('HealthProperties') and v.HealthProperties.Health.Value > 0 then
+                                    if v.Name == 'IceBarricade' and v.PrimaryPart and IsAlive(v) then
                                         return v
                                     elseif v.Name == 'SpikeCheckpoints' or v.Name == 'TowerLegs' then
                                         for i1,v1 in next, v:GetChildren() do
-                                            if v1.PrimaryPart and v1:FindFirstChild('HealthProperties') and v1.HealthProperties.Health.Value > 0 then
+                                            if v1.PrimaryPart and IsAlive(v1) then
                                                 return v1
                                             end
                                         end
@@ -457,36 +647,31 @@ else
                             end
                         end
                         
-                        function GetMob()
-                            local closest, closestDistance = nil, math.huge
+                        function GetTarget(type)
+                            local closest = nil
+                            local closestDistance = math.huge
 
                             for i,v in next, workspace.Mobs:GetChildren() do
-                                if not v.Name:find('#') and not v.Name:find('SummonerSummon') and v:IsA('Model') and not v:FindFirstChild('NoHealthbar') and v:FindFirstChild('Collider') then
-                                    local IsMob = require(game.ReplicatedStorage.Shared.Mobs.Mobs[v.Name]).BossTag == false
-                                    
-                                    if IsMob and IsAlive(v) then
-                                        local currentDistance = (ClientRoot.Position - v.Collider.Position).magnitude
-                                        if currentDistance < closestDistance then
-                                            closest = v
-                                            closestDistance = currentDistance
+                                if not v.Name:find('#') and not v.Name:find('SummonerSummon') and not v:FindFirstChild('NoHealthbar') and v:FindFirstChild('Collider') then
+                                    if IsAlive(v) then
+                                        if type == 'mob' and require(game.ReplicatedStorage.Shared.Mobs.Mobs[v.Name]).BossTag == false then
+                                            local currentDistance = (ClientRoot.Position - v.Collider.Position).magnitude
+                                            if currentDistance < closestDistance then
+                                                closest = v
+                                                closestDistance = currentDistance
+                                            end
+                                        elseif type == 'boss' and require(game.ReplicatedStorage.Shared.Mobs.Mobs[v.Name]).BossTag ~= false then
+                                            local AvoidPos = {'DireCaveSpawn',}
+                                            local CurrentPos = v:FindFirstChild("FromSpawnPart") and tostring(v.FromSpawnPart.Value)
+                                            if not table.find(AvoidPos, CurrentPos) then
+                                                closest = v
+                                            end
                                         end
                                     end
                                 end
                             end
         
                             return closest
-                        end
-                
-                        function GetBoss()
-                            for i,v in next, workspace.Mobs:GetChildren() do
-                                if not v.Name:find('#') and v:IsA('Model') and not v:FindFirstChild('NoHealthbar') and v:FindFirstChild('Collider') then
-                                    local IsBoss = require(game.ReplicatedStorage.Shared.Mobs.Mobs[v.Name]).BossTag ~= false
-
-                                    if IsBoss and IsAlive(v) then
-                                        return v
-                                    end
-                                end
-                            end
                         end
         
                         function SubObject()
@@ -498,25 +683,24 @@ else
                                 end
                             end
         
-                            if workspace:FindFirstChild('MissionObjects') and workspace.MissionObjects:FindFirstChild('Shields') then
-                                for i,v in next, workspace.MissionObjects.Shields:GetChildren() do
-                                    if v:FindFirstChild('Ring') and v:FindFirstChild('Glow') and v.Glow:IsA('MeshPart') and tostring(v.Glow.BrickColor) ~= 'Medium brown' then
-                                        return v.Ring
-                                    end
+                            if workspace:FindFirstChild('MissionObjects') and workspace.MissionObjects:FindFirstChild('IgnisShield') then
+                                local shield = workspace.MissionObjects:FindFirstChild('IgnisShield')
+                                if shield:FindFirstChild("Ring") and shield.Ring.Transparency == 0 then
+                                    return shield.Ring
                                 end
                             end
                         end
                 
                         function Trigger()
-                            function TowerChestMob()
-                                if workspace:FindFirstChild('Map') then
-                                    for i,v in next, workspace.Map:GetDescendants() do
-                                        if v:IsA('Part') and v:FindFirstChild('MobName') and v.MobName.Value == 'Tower2ChestMob' then
-                                            return v
-                                        end
-                                    end
-                                end
-                            end 
+                            -- function TowerChestMob()
+                            --     if workspace:FindFirstChild('Map') then
+                            --         for i,v in next, workspace.Map:GetDescendants() do
+                            --             if v:IsA('Part') and v:FindFirstChild('MobName') and v.MobName.Value == 'Tower2ChestMob' then
+                            --                 return v
+                            --             end
+                            --         end
+                            --     end
+                            -- end 
                 
                             function FloorFinished()
                                 if Client.PlayerGui.TowerVisual:FindFirstChild('TowerVisual') and Client.PlayerGui.TowerVisual.TowerVisual.Visible == true and Client.PlayerGui.TowerVisual.TowerVisual.KeyImage.TextLabel.Text:find('/') then
@@ -560,8 +744,8 @@ else
                                     if (v.Name:find('Cage') or v.Name:find('Treasure')) and v.PrimaryPart and v.PrimaryPart:FindFirstChildWhichIsA('TouchTransmitter') then
                                         v.PrimaryPart.CanCollide = false
                                         v.PrimaryPart.CFrame = ClientRoot.CFrame
-                                        task.wait()
-                                        v.PrimaryPart.CFrame = ClientRoot.CFrame + Vector3.new(0,500,0)
+                                        -- task.wait()
+                                        -- v.PrimaryPart.CFrame = ClientRoot.CFrame + Vector3.new(0,500,0)
                                     end
                                 end
                             end
@@ -570,69 +754,94 @@ else
                                 if FloorFinished() and workspace:FindFirstChild('Map') then
                                     Window:set_status('Move to exit')
                                     ClientRoot.CFrame = workspace.Map.Exit.BoundingBox.CFrame
-                                elseif not FloorFinished() and workspace:FindFirstChild('Map') then
-                                    local chestMob = TowerChestMob()
-                                    if chestMob then
-                                        Window:set_status('Found chest mob')
-                                        ClientRoot.CFrame = chestMob.CFrame + Vector3.new(0,25,0)
-                                    else
-                                        if Client.PlayerGui.TowerVisual.TowerVisual.KeyImage.TextLabel.Text:find('/') then
-                                            local str = (Client.PlayerGui.TowerVisual.TowerVisual.KeyImage.TextLabel.Text):split('/')
-                                            local current = tonumber(string.match(str[1] , '%d+'))
-                                            local max = tonumber(string.match(str[2] , '%d+'))
-                                            local lastPoint = max - current
-                                            for i,v in next, workspace.Map:GetChildren() do
-                                                if v:FindFirstChild('MobSpawns') then
-                                                    for a,b in next, v.MobSpawns:GetChildren() do
-                                                        if b:FindFirstChild('Spawns') and #b.Spawns:GetChildren() > 0 and #b.Spawns:GetChildren() <= lastPoint then
-                                                            for c,d in next, b.Spawns:GetChildren() do
-                                                                if GetMob() or FloorFinished() or not Settings['StartFarm'] then break end
-                                                                if d:IsA('Part') then
-                                                                    ClientRoot.CFrame = d.CFrame
-                                                                    task.wait(1)
-                                                                end
-                                                            end
-                                                        end
-                                                    end
-                                                end
-                                            end
-                                        end
-                                    end
+                                -- elseif not FloorFinished() and workspace:FindFirstChild('Map') then
+                                --     local chestMob = TowerChestMob()
+                                --     if chestMob then
+                                --         Window:set_status('Found chest mob')
+                                --         ClientRoot.CFrame = chestMob.CFrame + Vector3.new(0,25,0)
+                                --     else
+                                --         if Client.PlayerGui.TowerVisual.TowerVisual.KeyImage.TextLabel.Text:find('/') then
+                                --             local str = (Client.PlayerGui.TowerVisual.TowerVisual.KeyImage.TextLabel.Text):split('/')
+                                --             local current = tonumber(string.match(str[1] , '%d+'))
+                                --             local max = tonumber(string.match(str[2] , '%d+'))
+                                --             local lastPoint = max - current
+                                --             for i,v in next, workspace.Map:GetChildren() do
+                                --                 if v:FindFirstChild('MobSpawns') then
+                                --                     for a,b in next, v.MobSpawns:GetChildren() do
+                                --                         if b:FindFirstChild('Spawns') and #b.Spawns:GetChildren() > 0 and #b.Spawns:GetChildren() <= lastPoint then
+                                --                             for c,d in next, b.Spawns:GetChildren() do
+                                --                                 if GetMob() or FloorFinished() or not Settings['StartFarm'] then break end
+                                --                                 if d:IsA('Part') then
+                                --                                     ClientRoot.CFrame = d.CFrame
+                                --                                     task.wait(1)
+                                --                                 end
+                                --                             end
+                                --                         end
+                                --                     end
+                                --                 end
+                                --             end
+                                --         end
+                                --     end
                                 end
                             end
                         end
                         Trigger()
 
+                        function DodgeAlert()
+                            local HurtfulSkills = {
+                                'Slap','Sweep','Piledriver',
+                                'BreathFire','FireBreath','Flamethrower',
+                                'Attack1Fall','Attack2Fall',
+                                'FireWall','Powerslash',
+                                'DownwardIceFire','Attack1',
+                            }
+                    
+                            for i,v in next, workspace.Mobs:GetChildren() do
+                                if not v.Name:find('#') and v:FindFirstChild('Collider') and v:FindFirstChild('MobProperties') and v.MobProperties:FindFirstChild('CurrentAttack') and IsAlive(v) then
+                                    if (v.Collider.Position - ClientRoot.Position).magnitude <= 50 then
+                                        if table.find(HurtfulSkills, tostring(v.MobProperties.CurrentAttack.Value)) then
+                                            return true
+                                        end
+                                    end
+                                end
+                            end
+
+                            if workspace:FindFirstChild('FireBase') then
+                                return true
+                            end
+                    
+                            return false
+                        end
+
                         local object = GetObject()
-                        local mob = GetMob()
-                        local boss = GetBoss()
+                        local mob = GetTarget('mob')
+                        local boss = GetTarget('boss')
                         local ShortRanged = {'Swordmaster','Defender','DualWielder','Guardian','Berserker','Paladin','Demon','Dragoon','Warlord',}
 
                         if object then
-                            workspace.CurrentCamera.CameraType = Enum.CameraType.Track
-                            workspace.CurrentCamera.CameraSubject = object.PrimaryPart
-                            ClientRoot.CFrame = object.PrimaryPart.CFrame + Vector3.new(0,10,0)
+                            Window:set_status('Attacking: Object')
+                            workspace.CurrentCamera.CameraSubject = object
+                            ClientRoot.CFrame = object.PrimaryPart.CFrame
                         else
                             if mob then
                                 repeat task.wait()
                                     if GetObject() or not mob:FindFirstChild('Collider') or not IsAlive(Character) then break end
 
+                                    workspace.CurrentCamera.CameraSubject = mob
+
                                     if Character:FindFirstChild('HealthProperties') and Character.HealthProperties.Health.Value <= Character.HealthProperties.MaxHealth.Value/2.5 then
+                                        Window:set_status('Healing...')
                                         ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,100,0)
                                         repeat task.wait() until not IsAlive(Character) or Character.HealthProperties.Health.Value >= Character.HealthProperties.MaxHealth.Value
                                     else
-                                        workspace.CurrentCamera.CameraType = Enum.CameraType.Track
-                                        workspace.CurrentCamera.CameraSubject  = mob.Collider
+                                        local mob_name = require(game.ReplicatedStorage.Shared.Mobs.Mobs[mob.Name])['NameTag']
+                                        Window:set_status('Attacking: '..tostring(mob_name))
 
                                         if workspace:FindFirstChild('DireDeathballPink') then
                                             ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(5,40,0)
                                         else                                            
                                             if table.find(ShortRanged, ClientClass) then
-                                                if facing == 'infront' then
-                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-10,5)
-                                                elseif facing == 'behind' then
-                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-10,-5)
-                                                end
+                                                ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-10,3)
                                                 ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                             else
                                                 if ClientClass == 'Summoner' then
@@ -642,35 +851,38 @@ else
                                                         game.ReplicatedStorage.Shared.Combat.Skillsets.Summoner.Summon:FireServer()
                                                         task.wait(2)
                                                     else
-                                                        ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-20,5)
+                                                        ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-30,7)
                                                         ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                                     end
                                                 else
-                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-20,5)
+                                                    ClientRoot.CFrame = mob.Collider.CFrame + Vector3.new(0,-30,7)
                                                     ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(mob.Collider.Position.X, ClientRoot.Position.Y, mob.Collider.Position.Z))
                                                 end
                                             end
                                         end
                                     end
                                 until not mob or not Settings['StartFarm']
-                                if game.PlaceId == 6386112652 and GetBoss() then -- Dungeon 5-1
+                                workspace.CurrentCamera.CameraSubject = Character
+                                if game.PlaceId == 6386112652 and GetTarget('boss') then -- Dungeon 5-1
                                     ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(0,50,0)
                                 end
                             else
                                 if boss then
                                     repeat task.wait()
-                                        if (GetObject()
-                                            or GetMob() 
-                                            or not boss.Parent 
-                                            or not boss:FindFirstChild('Collider') 
-                                            or (boss.FromSpawnPart.Value ~= nil and boss.FromSpawnPart.Value:FindFirstChild('Invincible') ~= nil) 
-                                            or (bossPos ~= nil and boss.Collider.Position.Y < bossPos - 20) 
+                                        if (
+                                            GetObject()
+                                            or GetTarget('mob')
+                                            or not boss.Parent
+                                            or not boss:FindFirstChild('Collider')
+                                            or (bossPos ~= nil and boss.Collider.Position.Y < bossPos - 100)
                                             or boss.MobProperties.Busy:FindFirstChild('Before') 
                                             or workspace:FindFirstChild('GreaterTreeShield')
                                             or not IsAlive(Character)) then
                                             break
                                         end
                                         
+                                        workspace.CurrentCamera.CameraSubject = boss
+
                                         if not boss.Name:find('Zeus') then
                                             boss.Collider.CanCollide = false
                                         end
@@ -682,11 +894,12 @@ else
                                                 ClientRoot.CFrame = SubObject().CFrame + Vector3.new(0,5,0)
                                             else
                                                 if Character:FindFirstChild('HealthProperties') and Character.HealthProperties.Health.Value <= Character.HealthProperties.MaxHealth.Value/2 then
+                                                    Window:set_status('Healing...')
                                                     ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,100,0)
                                                     repeat task.wait() until not IsAlive(Character) or Character.HealthProperties.Health.Value >= Character.HealthProperties.MaxHealth.Value
                                                 else
-                                                    workspace.CurrentCamera.CameraType = Enum.CameraType.Track
-                                                    workspace.CurrentCamera.CameraSubject = boss.Collider
+                                                    local boss_name = require(game.ReplicatedStorage.Shared.Mobs.Mobs[boss.Name])['NameTag']
+                                                    Window:set_status('Attacking: '..tostring(boss_name))
 
                                                     if boss.Name == 'BOSSAnubis' then -- Dungeon 4-3
                                                         if (ClientRoot.Position - boss.Collider.Position).magnitude > 50 then
@@ -700,26 +913,28 @@ else
                                                         end
                                                     elseif game.PlaceId == 4050468028 then
                                                         if not Client.PlayerGui.BossHealthbar.BossHealthbar.Panels:FindFirstChild('Panel') then
-                                                            ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,45,0)
+                                                            ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,55,0)
                                                             task.wait(3)
                                                         end
                                                     end
 
-                                                    local OneShotSkills = {'Thunderstorm','Shockwave','DarkOrbAttack','IceBeam',}
+                                                    local OneShotSkills = {'Thunderstorm','Shockwave','DarkOrbAttack','IceBeam','PillarSmash','Rage',}
                                                     if boss:FindFirstChild('MobProperties') and table.find(OneShotSkills, tostring(boss.MobProperties.CurrentAttack.Value)) then
-                                                        ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(5,40,0)
+                                                        ClientRoot.CFrame = ClientRoot.CFrame + Vector3.new(5,40,0)
+                                                        repeat task.wait() until not boss or not boss:FindFirstChild('MobProperties') or not table.find(OneShotSkills, tostring(boss.MobProperties.CurrentAttack.Value))
                                                     else
                                                         if table.find(ShortRanged, ClientClass) then
-                                                            if facing == 'infront' then
-                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-10,15)
-                                                            elseif facing == 'behind' then
+                                                            if DodgeAlert() then
                                                                 ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-10,-15)
+                                                            else
+                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-10,10)
                                                             end
+                                                            
                                                             ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                         else
                                                             if ClientClass == 'Summoner' then
                                                                 if Character.Properties.SummonCount.Value >= 3 then
-                                                                    ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,30,5)
+                                                                    ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,50,10)
                                                                     task.wait(1)
                                                                     if not require(game.ReplicatedStorage.Client.Actions):IsOnCooldown('Ultimate') then
                                                                         require(game.ReplicatedStorage.Client.Actions):FireCooldown('Ultimate')
@@ -728,11 +943,11 @@ else
                                                                     require(game.ReplicatedStorage.Client.Actions):FireCooldown('Skill1')
                                                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Summoner.Summon:FireServer()
                                                                 else
-                                                                    ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-20,5)
+                                                                    ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-30,5)
                                                                     ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                                 end
                                                             else
-                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-20,5)
+                                                                ClientRoot.CFrame = boss.Collider.CFrame + Vector3.new(0,-30,5)
                                                                 ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(boss.Collider.Position.X, ClientRoot.Position.Y, boss.Collider.Position.Z))
                                                             end
                                                         end
@@ -741,6 +956,7 @@ else
                                             end
                                         end
                                     until not boss or not Settings['StartFarm']
+                                    workspace.CurrentCamera.CameraSubject = Character
                                 end
                             end
                         end
@@ -824,15 +1040,17 @@ else
 
                                 local steps = (ClientRoot.Position - target.Position).magnitude
                                 local startCFrame = ClientRoot.CFrame
-                                local endCFrame = target.CFrame + Vector3.new(0,-12,0)
-                                local speed = 0.6
+                                local endCFrame = target.CFrame + Vector3.new(0,-10,0)
+                                local speed = 0.3
                                 for i = 0, steps, speed do
+                                    if not ClientRoot then break end
+
                                     if (ClientRoot.Position - target.Position).magnitude > 15 then
                                         ClientRoot.CanCollide = false
                                         ClientRoot.CFrame = startCFrame:lerp(endCFrame, i/steps)
                                         game:GetService("RunService").Heartbeat:wait()
                                     else
-                                        ClientRoot.CFrame = target.CFrame + Vector3.new(0,-12,5)
+                                        ClientRoot.CFrame = target.CFrame + Vector3.new(0,-10,5)
                                         ClientRoot.CFrame = CFrame.lookAt(ClientRoot.Position, Vector3.new(target.Position.X, ClientRoot.Position.Y, target.Position.Z))
                                     end
                                 end
@@ -1036,7 +1254,7 @@ else
                     end
                     
                     function Action(DoQuest)
-                        local Towers = {17,22,21,23,27}
+                        local Towers = {17,22,21,23,27,29}
         
                         if QuestLeft('daily') > 0 and Settings['FarmDailyQuest'] then
                             QuestRoute(GetQuest('daily'), DoQuest)
@@ -1049,12 +1267,14 @@ else
                                         Window:set_status('Move to: '..(MissionDefValue(1))..' ('..(DifficultyList(1)[1])..')')
                                         game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(1, 1)
                                     else
-                                        if table.find(Towers, (NextDungeon()[1])) then
-                                            Window:set_status('Move to: '..(MissionDefValue(NextDungeon()[1])))
-                                            game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(NextDungeon()[1])
+                                        local nextDungeon = NextDungeon()
+
+                                        if table.find(Towers, (nextDungeon[1])) then
+                                            Window:set_status('Move to: '..(MissionDefValue(nextDungeon[1])))
+                                            game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(nextDungeon[1])
                                         else
-                                            Window:set_status('Move to: '..(MissionDefValue(NextDungeon()[1]))..' ('..(DifficultyList(NextDungeon()[1])[NextDungeon()[2]])..')')
-                                            game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(NextDungeon()[1], NextDungeon()[2])
+                                            Window:set_status('Move to: '..(MissionDefValue(nextDungeon[1]))..' ('..(DifficultyList(nextDungeon[1])[nextDungeon[2]])..')')
+                                            game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(nextDungeon[1], nextDungeon[2])
                                         end
                                     end
                                 else
@@ -1062,6 +1282,10 @@ else
                                         Window:set_status('Move to: '..(MissionDefValue(Settings['DungeonID'])))
                                         game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(Settings['DungeonID'])
                                     else
+                                        if Settings['DifficultyID'] == nil then
+                                            Settings['DifficultyID'] = 1
+                                        end
+                                        
                                         Window:set_status('Move to: '..(MissionDefValue(Settings['DungeonID']))..' ('..(DifficultyList(Settings['DungeonID'])[Settings['DifficultyID']])..')')
                                         game.ReplicatedStorage.Shared.Teleport.StartRaid:FireServer(Settings['DungeonID'], Settings['DifficultyID'])
                                     end
@@ -1073,7 +1297,7 @@ else
                     local ItemCount = 0
                     if game.ReplicatedStorage:FindFirstChild('FloorCounter') then
                         game.ReplicatedStorage.FloorCounter.Changed:Connect(function(floor)
-                            if floor == 10 then
+                            if floor == 5 then
                                 ClientProfile.Inventory.Items.ChildAdded:Connect(function(item)
                                     local type = require(game.ReplicatedStorage.Shared.Items)[item.Name].Type
                                     if type == 'Weapon' then
@@ -1114,7 +1338,7 @@ else
                             if InDungeon then
                                 FarmDungeon()
 
-                                if Settings['RestartDungeon'] and (Client.PlayerGui.MissionRewards.MissionRewards.Visible == true or ItemCount >= 4 or HolidayDungeonEnded == true) then
+                                if Settings['RestartDungeon'] and (Client.PlayerGui.MissionRewards.MissionRewards.Visible == true or ItemCount >= 3 or HolidayDungeonEnded == true) then
                                     game.ReplicatedStorage.Shared.Missions.GetMissionPrize:InvokeServer()
                                     game.ReplicatedStorage.Shared.Missions.GetMissionPrize:InvokeServer()
                                     task.wait(3)
@@ -1129,7 +1353,6 @@ else
             end
         }
 
-        
     local Features = Window:Tab{Name = 'Features', Icon = 'rbxassetid://8569322835'}
         Features:Toggle{Name = 'Kill Aura',
             StartingState = Settings['KillAura'],
@@ -1139,320 +1362,148 @@ else
                 Save()
 
                 local ShortRanged = {
-                    'Swordmaster',
-                    'Defender',
-                    'DualWielder',
-                    'Guardian',
-                    'Berserker',
-                    'Paladin',
-                    'Demon',
-                    'Dragoon',
+                    'Swordmaster','Defender',
+                    'DualWielder','Guardian',
+                    'Berserker','Paladin',
+                    'Demon','Dragoon',
                     'Warlord',
                 }
 
-                local AtkType = {
-                    ['Primary'] 	= {},
-                    ['Skill1'] 		= {},
-                    ['Skill2'] 		= {},
-                    ['Skill3'] 		= {},
-                    ['Ultimate'] 	= {},
-                }
-
                 local Delay = {
-                    ['Mage']        = 0.35,
-                    ['Swordmaster'] = 0.4,
-                    ['Defender']    = 0.4,
+                    ['Mage']        = {0.35, 5, 8, 0, 0},
+                    ['Swordmaster'] = {0.4, 5, 8, 0, 0},
+                    ['Defender']    = {0.4, 5, 8, 0, 0},
         
-                    ['IcefireMage'] = 0.4,
-                    ['DualWielder'] = 0.4,
-                    ['Guardian']    = 0.4,
+                    ['IcefireMage'] = {0.4, 6, 10, 15, 30},
+                    ['DualWielder'] = {0.65, 0, 6, 8, 30},
+                    ['Guardian']    = {0.75, 0, 6, 8, 30},
         
-                    ['MageOfLight'] = {0.3, 0, 0, 0, 0},
-                    ['Berserker']   = 0.35,
-                    ['Paladin']     = 0.3,
+                    ['MageOfLight'] = {0.35, 0, 0, 0, 0},
+                    ['Berserker']   = {0.35, 5, 5, 5, 20},
+                    ['Paladin']     = {0.3, 2, 0, 11, 0},
         
-                    ['Demon']       = 0.35,
-                    ['Dragoon']     = {0.3, 5, 5, 5, 25},
-                    ['Archer']      = 0.35,
+                    ['Demon']       = {0.8, 0, 5, 9, 0},
+                    ['Dragoon']     = {0.4, 5, 5, 7, 25},
+                    ['Archer']      = {0.45, 5, 10, 10, 25},
 
-                    ['Summoner']    = {0.7, 4, 2, 7, 20},
-                    ['Warlord']     = {0.35, 2.5, 1.5, 6, 20},
+                    ['Summoner']    = {0.7, 0, 0, 5, 0},
+                    ['Warlord']     = {0.35, 3, 2, 3, 10},
                 }
 
-                function GetTargetPos()
-                    local mob, pos = require(game.ReplicatedStorage.Shared.Combat):GetInRadius(ClientRoot.Position, 100, 50, nil, nil, Character)
-                    require(game.ReplicatedStorage.Shared.Combat):ValidateTargets(Character, mob, pos)
-
-                    local closestPos = nil
-                    local maxDistance = 999
-
-                    for i,v in next, mob do
-                        local valid_pos, valid_mob = require(game.ReplicatedStorage.Shared.Mobs):GetClosestTargetPosition(v)
-                        if valid_pos and valid_mob then
-                            local currentDistance = (valid_pos - ClientRoot.Position).magnitude
-
-                            if currentDistance < maxDistance then
-                                maxDistance = currentDistance
-                                closestPos = valid_pos
+                function GetObjectPos()
+                    if workspace:FindFirstChild('MissionObjects') then
+                        for i,v in next, workspace.MissionObjects:GetChildren() do
+                            if v.Name == 'IceBarricade' and v.PrimaryPart and IsAlive(v) then
+                                return v.PrimaryPart.Position
+                            elseif v.Name == 'SpikeCheckpoints' or v.Name == 'TowerLegs' then
+                                for i1,v1 in next, v:GetChildren() do
+                                    if v1.PrimaryPart and IsAlive(v1) then
+                                        return v1.PrimaryPart.Position
+                                    end
+                                end
+                            end
+                        end
+        
+                        for i,v in next, workspace:GetChildren() do
+                            if (v.Name:find('Pillar') or v.Name == 'Gate' or v.Name == 'TriggerBarrel') and v.PrimaryPart and IsAlive(v) then
+                                return v.PrimaryPart.Position
+                            elseif v.Name == 'FearNukes' then
+                                for i1,v1 in next, v:GetChildren() do
+                                    if v1.PrimaryPart and IsAlive(v1) then
+                                        return v1.PrimaryPart.Position
+                                    end
+                                end
                             end
                         end
                     end
-
-                    return closestPos
                 end
 
-                function Refill()
-                    if ClientClass == 'Mage' then
-                        table.insert(AtkType['Primary'], 'Mage1')
-                        
-                        table.insert(AtkType['Skill1'], 'ArcaneBlast')
-                        table.insert(AtkType['Skill1'], 'ArcaneBlastAOE')
+                function GetMobPos()
+                    local closest, closestDistance = nil, 50
                     
-                        for i=1,12 do
-                            table.insert(AtkType['Skill2'], 'ArcaneWave'..i)
-                        end
-                    elseif ClientClass == 'Swordmaster' then
-                        for i=1,6 do
-                            table.insert(AtkType['Primary'], 'Swordmaster'..i)
-                        end
-                    
-                        for i=1,2 do
-                            table.insert(AtkType['Skill1'], 'CrescentStrike'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill2'], 'Leap')
-                    elseif ClientClass == 'Defender' then
-                        for i=1,5 do
-                            table.insert(AtkType['Primary'], 'Defender'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill1'], 'Groundbreaker')
-                    
-                        for i=1,4 do
-                            table.insert(AtkType['Skill2'], 'Spin'..i)
-                        end
-                    elseif ClientClass == 'IcefireMage' then
-                        table.insert(AtkType['Primary'], 'IcefireMage1')
-                        
-                        for i=1,5 do
-                            table.insert(AtkType['Skill1'], 'IcySpikes'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill2'], 'IcefireMageFireballBlast')
-                        table.insert(AtkType['Skill2'], 'IcefireMageFireball')
-                    
-                        table.insert(AtkType['Skill3'], 'LightningStrike')
-                    
-                        table.insert(AtkType['Ultimate'], 'IcefireMageUltimateFrost')
-                        for i=1,10 do
-                            table.insert(AtkType['Ultimate'], 'IcefireMageUltimateMeteor'..i)
-                        end
-                    elseif ClientClass == 'DualWielder' then
-                        for i=1,10 do
-                            table.insert(AtkType['Primary'], 'DualWield'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill2'], 'DashStrike')
-                    
-                        for i=1,4 do
-                            table.insert(AtkType['Skill3'], 'CrossSlash'..i)
-                        end
-                    
-                        for i=1,12 do
-                            table.insert(AtkType['Ultimate'], 'DualWieldUltimateSword'..i)
-                            table.insert(AtkType['Ultimate'], 'DualWieldUltimateHit'..i)
-                        end
-                        table.insert(AtkType['Ultimate'], 'DualWieldUltimateSlam')
-                        for i=1,3 do
-                            table.insert(AtkType['Ultimate'], 'DualWieldUltimateSlam'..i)
-                        end
-                    elseif ClientClass == 'Guardian' then
-                        for i=1,4 do
-                            table.insert(AtkType['Primary'], 'Guardian'..i)
-                        end
-                    
-                        for i=1,5 do
-                            table.insert(AtkType['Skill2'], 'RockSpikes'..i)
-                        end
-                    
-                        for i=1,15 do
-                            table.insert(AtkType['Skill3'], 'SlashFury'..i)
-                        end
-                    
-                        for i=1,12 do
-                            table.insert(AtkType['Ultimate'], 'SwordPrison'..i)
-                        end
-                    elseif ClientClass == 'MageOfLight' then
-                        table.insert(AtkType['Primary'], 'MageOfLight')
-                        table.insert(AtkType['Primary'], 'MageOfLightBlast')
-                        table.insert(AtkType['Primary'], 'MageOfLightCharged')
-                        table.insert(AtkType['Primary'], 'MageOfLightBlastCharged')
-                    elseif ClientClass == 'Berserker' then
-                        for i=1,6 do
-                            table.insert(AtkType['Primary'], 'Berserker'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill1'], 'AggroSlam')
-                    
-                        for i=1,8 do
-                            table.insert(AtkType['Skill2'], 'GigaSpin'..i)
-                        end
-                    
-                        for i=1,2 do
-                            table.insert(AtkType['Skill3'], 'Fissure'..i)
-                        end
-                    elseif ClientClass == 'Paladin' then  
-                        for i=1,4 do
-                            table.insert(AtkType['Primary'], 'Paladin'..i)
-                            table.insert(AtkType['Primary'], 'LightPaladin'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill1'], 'Block')
-                    
-                        for i=1,2 do
-                            table.insert(AtkType['Skill3'], 'LightThrust'..i)
-                        end
-                    elseif ClientClass == 'Demon' then
-                        for i=1,25 do
-                            table.insert(AtkType['Primary'], 'Demon'..i)
-                        end
-                        for i=1,9 do
-                            table.insert(AtkType['Primary'], 'DemonDPS'..i)
-                        end
-                    
-                        for i=1,3 do
-                            table.insert(AtkType['Skill2'], 'ScytheThrow'..i)
-                            table.insert(AtkType['Skill2'], 'ScytheThrowDPS'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill3'], 'DemonLifeStealAOE')
-                        table.insert(AtkType['Skill3'], 'DemonLifeStealDPS')
-                    elseif ClientClass == 'Dragoon' then
-                        for i=1,6 do
-                            table.insert(AtkType['Primary'], 'Dragoon'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill1'], 'DragoonDash')
-                        for i=1,10 do
-                            table.insert(AtkType['Skill1'], 'DragoonCross'..i)
-                        end
-                    
-                        for i=1,5 do
-                            table.insert(AtkType['Skill2'], 'MultiStrike'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill3'], 'DragoonFall')
-                    
-                        table.insert(AtkType['Ultimate'], 'DragoonUltimate')
-                        for i=1,7 do
-                            table.insert(AtkType['Ultimate'], 'UltimateDragon'..i)
-                        end
-                    elseif ClientClass == 'Archer' then
-                        table.insert(AtkType['Primary'], 'Archer')
-                        
-                        for i=1,9 do
-                            table.insert(AtkType['Skill1'], 'PiercingArrow'..i)
-                        end
-                    
-                        table.insert(AtkType['Skill2'], 'SpiritBomb')
-                    
-                        for i=1,5 do
-                            table.insert(AtkType['Skill3'], 'MortarStrike'..i)
-                        end
-                    
-                        for i=1,6 do
-                            table.insert(AtkType['Ultimate'], 'HeavenlySword'..i)
-                        end
-                    elseif ClientClass == 'Summoner' then
-                        for i=1,4 do
-                            table.insert(AtkType['Primary'], 'Summoner'..i)
-                        end
-
-                        for i=1,5 do
-                            table.insert(AtkType['Skill3'], 'SoulHarvest'..i)
-                        end
-                    elseif ClientClass == 'Warlord' then
-                        for i=1,4 do
-                            table.insert(AtkType['Primary'], 'Warlord'..i)
-                        end
-
-                        for i=1,3 do
-                            table.insert(AtkType['Skill1'], 'Piledriver'..i)
-                        end
-
-                        table.insert(AtkType['Skill2'], 'BlockingWarlord')
-
-                        table.insert(AtkType['Skill3'], 'ChainsOfWar')
-
-                        for i=1,4 do
-                            table.insert(AtkType['Ultimate'], 'WarlordUltimate'..i)
+                    for i,v in next, workspace.Mobs:GetChildren() do
+                        if v:IsA('Model') and not v:FindFirstChild('NoHealthbar') and v:FindFirstChild('Collider') then
+                            local CanDamage = require(game.ReplicatedStorage.Shared.Status):HasStatus(v, 'Invincible') == nil
+                            if CanDamage and IsAlive(v) then
+                                local currentDistance = (ClientRoot.Position - v.Collider.Position).magnitude
+                                if currentDistance < closestDistance then
+                                    closest = v.Collider.Position
+                                    closestDistance = currentDistance
+                                end
+                            end
                         end
                     end
+        
+                    return closest
                 end
-                Refill()
+                
+                function DamagePos()
+                    local object = GetObjectPos()
+                    local mob = GetMobPos()
+
+                    if object then
+                        return object
+                    else
+                        return mob
+                    end
+                end
 
                 function LoopAttack(skilltype)
-                    local pos = GetTargetPos()
-
+                    local pos = DamagePos()
                     if pos and not require(game.ReplicatedStorage.Client.Actions):IsMounted() then                        
                         for index,attack in next, AtkType[skilltype] do
                             if table.find(ShortRanged, ClientClass) then
-                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, ClientRoot.Position, (pos - ClientRoot.Position).Unit)
+                                game.ReplicatedStorage.Shared.Combat.Attack:FireServer(attack, ClientRoot.Position, (pos - ClientRoot.Position).Unit)
                             else
-                                require(game.ReplicatedStorage.Shared.Combat):AttackWithSkill(attack, pos)
+                                game.ReplicatedStorage.Shared.Combat.Attack:FireServer(attack, pos)
                             end
 
+                            task.wait(0.035)
+
                             if attack == AtkType[skilltype][#AtkType[skilltype]] then break end
-                            task.wait(0.03)
                         end
                     end
                 end
 
-                local primary = AtkType['Primary']
-                local skill1 = AtkType['Skill1']
-                local skill2 = AtkType['Skill2']
-                local skill3 = AtkType['Skill3']
-                local ult = AtkType['Ultimate']
-
-                if #primary > 0 then
+                if #AtkType['Primary'] > 0 then
                     task.defer(function()
-                        while Settings['KillAura'] and task.wait() do
+                        while Settings['KillAura'] do
                             LoopAttack('Primary')
                             task.wait(Delay[ClientClass][1])
                         end
                     end)
                 end
 
-                if #skill1 > 0 then
+                if #AtkType['Skill1'] > 0 then
                     task.defer(function()
-                        while Settings['KillAura'] and task.wait() do
+                        while Settings['KillAura'] do
                             LoopAttack('Skill1')
                             task.wait(Delay[ClientClass][2])
                         end
                     end)
                 end
 
-                if #skill2 > 0 then
+                if #AtkType['Skill2'] > 0 then
                     task.defer(function()
-                        while Settings['KillAura'] and task.wait() do
+                        while Settings['KillAura'] do
                             LoopAttack('Skill2')
                             task.wait(Delay[ClientClass][3])
                         end
                     end)
                 end
 
-                if #skill3 > 0 then
+                if #AtkType['Skill3'] > 0 then
                     task.defer(function()
-                        while Settings['KillAura'] and task.wait() do
+                        while Settings['KillAura'] do
                             LoopAttack('Skill3')
                             task.wait(Delay[ClientClass][4])
                         end
                     end)
                 end
 
-                if #ult > 0 then
+                if #AtkType['Ultimate'] > 0 then
                     task.defer(function()
-                        while Settings['KillAura'] and task.wait() do
+                        while Settings['KillAura'] do
                             LoopAttack('Ultimate')
                             task.wait(Delay[ClientClass][5])
                         end
@@ -1469,16 +1520,18 @@ else
                                     game.ReplicatedStorage.Shared.Combat.Skillsets.Paladin.GuildedLight:FireServer()
                                 end
                             end
-                                                    
-                            if GetTargetPos() and ClientClass == 'Demon' and InDungeon then
-                                for i=1,27 do
-                                    game.ReplicatedStorage.Shared.Combat.Skillsets.Demon.Demonic:FireServer()
-                                end
-                                if require(game.ReplicatedStorage.Shared.Energy):GetEnergyRatio(Character) == 1 then
-                                    game.ReplicatedStorage.Shared.Combat.Skillsets.Demon.Ultimate:FireServer()
-                                    require(game.ReplicatedStorage.Shared.Combat.Skillsets.Demon):CleanupCharacter(Character)
-                                    if Character:FindFirstChild('Statuses') and Character.Statuses:FindFirstChild('AttackBuffDemonPrince') then
-                                        Character.Statuses.AttackBuffDemonPrince.Value = 0
+                                    
+                            if DamagePos() then
+                                if ClientClass == 'Demon' and InDungeon then
+                                    for i=1,27 do
+                                        game.ReplicatedStorage.Shared.Combat.Skillsets.Demon.Demonic:FireServer()
+                                    end
+                                    if require(game.ReplicatedStorage.Shared.Energy):GetEnergyRatio(Character) == 1 then
+                                        game.ReplicatedStorage.Shared.Combat.Skillsets.Demon.Ultimate:FireServer()
+                                        require(game.ReplicatedStorage.Shared.Combat.Skillsets.Demon):CleanupCharacter(Character)
+                                        if Character:FindFirstChild('Statuses') and Character.Statuses:FindFirstChild('AttackBuffDemonPrince') then
+                                            Character.Statuses.AttackBuffDemonPrince.Value = 0
+                                        end
                                     end
                                 end
                             end
@@ -1544,6 +1597,72 @@ else
                 require(game.ReplicatedStorage.Shared.Settings).SPRINT_WALKSPEED = value
             end
         }
+
+        -- local NameList, DistanceList = {}, {}
+        -- Features:Toggle{Name = 'ESP (Players)',
+        --     StartingState = false,
+        --     Description = nil,
+        --     Callback = function(esp_players)
+        --         local EspLoop
+        --         if esp_players then
+        --             EspLoop = game:GetService('RunService').RenderStepped:Connect(function()
+        --                 for i,v in next, NameList do if v then v:Remove() end end
+        --                 for i,v in next, DistanceList do if v then v:Remove() end end
+                        
+        --                 NameList = {}
+        --                 DistanceList = {}
+        
+        --                 for i,v in next, game.Players:GetPlayers() do
+        --                     if v.Name ~= Client.Name and v.Character and v.Character.PrimaryPart ~= nil and IsAlive(v.Character) then
+        --                         local pos = v.Character.PrimaryPart.Position
+        --                         local ScreenSpacePos, IsOnScreen = workspace.CurrentCamera:WorldToViewportPoint(pos)
+                                
+        --                         if IsOnScreen then
+        --                             local NAME = Drawing.new('Text')
+        --                             NAME.Text = v.Name
+        --                             NAME.Size = 16
+        --                             NAME.Color = Color3.fromRGB(255, 248, 145)
+        --                             NAME.Center = true
+        --                             NAME.Visible = true
+        --                             NAME.Transparency = 1
+        --                             NAME.Position = Vector2.new(0, 0)
+        --                             NAME.Outline = true
+        --                             NAME.OutlineColor = Color3.fromRGB(10, 10, 10)
+        --                             NAME.Font = 3
+                                    
+        --                             local DISTANCE = Drawing.new('Text')
+        --                             DISTANCE.Text = '[]'
+        --                             DISTANCE.Size = 14
+        --                             DISTANCE.Color = Color3.fromRGB(255, 255, 255)
+        --                             DISTANCE.Center = true
+        --                             DISTANCE.Visible = true
+        --                             DISTANCE.Transparency = 1
+        --                             DISTANCE.Position = Vector2.new(0, 0)
+        --                             DISTANCE.Outline = true
+        --                             DISTANCE.OutlineColor = Color3.fromRGB(10, 10, 10)
+        --                             DISTANCE.Font = 3
+                                    
+        --                             NAME.Position = Vector2.new(ScreenSpacePos.X, ScreenSpacePos.Y)
+        --                             DISTANCE.Position = NAME.Position + Vector2.new(0, NAME.TextBounds.Y/1.2)
+        --                             DISTANCE.Text = '['..math.round((game.Players.LocalPlayer.Character.PrimaryPart.Position - pos).magnitude)..'m]'
+                    
+        --                             NameList[#NameList+1] = NAME
+        --                             DistanceList[#DistanceList+1] = DISTANCE
+        --                         end
+        --                     end
+        --                 end
+        --             end)
+        --         else
+        --             pcall(function() EspLoop:Disconnect() end)
+        
+        --             for i,v in next, NameList do v:Remove() end
+        --             for i,v in next, DistanceList do v:Remove() end
+                    
+        --             NameList = {}
+        --             DistanceList = {}
+        --         end
+        --     end
+        -- }
 
     local Inventory = Window:Tab{Name = 'Inventory', Icon = 'rbxassetid://4483345998'}
         for i=1,4 do

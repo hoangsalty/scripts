@@ -1,29 +1,28 @@
 --// Variables
-local library = loadstring(game:HttpGet('loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/un-named%20backups/jans", true))()'))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/un-named%20backups/jans", true))()
 
 for i,v in next, getconnections(game.Players.LocalPlayer.Idled) do
     v:Disable()
 end
 
-local framework, scrollHandler do
-    while task.wait() do
-        for _, obj in next, getgc(true) do
-            if type(obj) == 'table' and rawget(obj, 'GameUI') then
-                framework = obj
-                break
-            end
-        end
-
-        for _, module in next, getloadedmodules() do
-            if module.Name == 'ScrollHandler' then
-                scrollHandler = module
-                break
-            end
-        end
-
-        if type(framework) == 'table' and typeof(scrollHandler) == 'Instance' then
+local framework, scrollHandler
+while task.wait() do
+    for _, obj in next, getgc(true) do
+        if type(obj) == 'table' and rawget(obj, 'GameUI') then 
+            framework = obj
             break
         end
+    end
+
+    for _, module in next, getloadedmodules() do
+        if module.Name == 'ScrollHandler' then
+            scrollHandler = module
+            break
+        end
+    end 
+
+    if (type(framework) == 'table' and typeof(scrollHandler) == 'Instance') then
+        break
     end
 end
 
@@ -41,8 +40,11 @@ function fireSignal(target, signal, ...)
     set_identity(7)
 end
 
-local map = { [0] = 'Left', [1] = 'Down', [2] = 'Up', [3] = 'Right', }
-local keys = { Up = Enum.KeyCode.Up; Down = Enum.KeyCode.Down; Left = Enum.KeyCode.Left; Right = Enum.KeyCode.Right; }
+local keyCodeMap = {}
+for _, enum in next, Enum.KeyCode:GetEnumItems() do
+    keyCodeMap[enum.Value] = enum
+end
+
 local Chances = {
     ['Sick'] = 97,
     ['Good'] = 93,
@@ -90,9 +92,13 @@ function RollAccuracy()
 end
 
 function nearNote(note_DataTime, note_Position)
-    for index, arrow in next, framework.UI.ActiveSections do
+    local count = framework.SongPlayer:GetKeyCount()
+    local mode = count .. 'Key'
+
+    for index, arrow in next, framework.UI:GetNotes() do
         if arrow.Side == framework.UI.CurrentSide then
-            local position = map[arrow.Data.Position % 4]
+            local position = (arrow.Data.Position % count) .. ''
+
             if position and (position == note_Position) then
             	if (arrow.Data.Time - note_DataTime) <= 0.15 then
                     return 0.03
@@ -113,11 +119,29 @@ shared._id = game:GetService('HttpService'):GenerateGUID(false)
 game:GetService('RunService'):BindToRenderStep(shared._id, 1, function()
 	if not library.flags.autoPlayer then return end
 
-    for index, arrow in next, framework.UI.ActiveSections do
-        if type(arrow) ~= 'table' then continue end
+    local currentlyPlaying = framework.SongPlayer.CurrentlyPlaying
 
-        if arrow.Side == framework.UI.CurrentSide and not arrow.Marked and framework.SongPlayer.CurrentlyPlaying.TimePosition > 0 then
-            local position = map[arrow.Data.Position % 4]
+    if typeof(currentlyPlaying) ~= 'Instance' or not currentlyPlaying:IsA('Sound') then 
+        return 
+    end
+
+    local count = framework.SongPlayer:GetKeyCount()
+    local mode = count .. 'Key'
+
+    local arrowData = framework.ArrowData[mode].Arrows
+
+    for index, arrow in next, framework.UI:GetNotes() do
+        local ignoredNoteTypes = { Death = true, Mechanic = true, Poison = true }
+
+        if type(arrow.NoteDataConfigs) == 'table' then 
+            if ignoredNoteTypes[arrow.NoteDataConfigs.Type] then 
+                continue
+            end
+        end
+
+        if (arrow.Side == framework.UI.CurrentSide) and (not arrow.Marked) and (currentlyPlaying.TimePosition > 0) then
+            local position = tostring(arrow.Data.Position % count)
+
             if position then
                 local hitboxOffset = 0 do
                     local settings = framework.Settings
@@ -147,13 +171,15 @@ game:GetService('RunService'):BindToRenderStep(shared._id, 1, function()
                 if noteTime >= Chances[RollAccuracy()] then
                     task.spawn(function()
                         arrow.Marked = true
-                        fireSignal(scrollHandler, game:GetService('UserInputService').InputBegan, { KeyCode = keys[position], UserInputType = Enum.UserInputType.Keyboard }, false)
+
+                        local keyCode = keyCodeMap[arrowData[position].Keybinds.Keyboard[1]]
+                        fireSignal(scrollHandler, game:GetService('UserInputService').InputBegan, { KeyCode = keyCode, UserInputType = Enum.UserInputType.Keyboard }, false)
                         if arrow.Data.Length > 0 then
                             task.wait(arrow.Data.Length)
                         else
                             task.wait(nearNote(arrow.Data.Time, position))
                         end
-                        fireSignal(scrollHandler, game:GetService('UserInputService').InputEnded, { KeyCode = keys[position], UserInputType = Enum.UserInputType.Keyboard }, false)
+                        fireSignal(scrollHandler, game:GetService('UserInputService').InputEnded, { KeyCode = keyCode, UserInputType = Enum.UserInputType.Keyboard }, false)
                         arrow.Marked = nil
                     end)
                 end
@@ -162,55 +188,55 @@ game:GetService('RunService'):BindToRenderStep(shared._id, 1, function()
     end
 end)
 
-function getPrompt(side)
-    local currentside = '1'
-    if side == 'Left' then
-        currentside = '1'
-    elseif side == 'Right' then
-        currentside = '2'
-    end
-    for i,v in next, workspace.Map.Stages:GetChildren() do
-        if v:FindFirstChild('Microphones') then
-            for i1,v1 in next, v.Microphones:GetChildren() do
-                if v1.Name == currentside and v1:FindFirstChild('Handle') and v1.Handle:FindFirstChild('Attachment') and v1.Handle.Attachment:FindFirstChildWhichIsA('ProximityPrompt') then
-                    if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v1.Handle.Position).magnitude <= 50 then
-                        return v1.Handle
-                    end
-                end
-            end
-        end
-    end
-end
+-- function getPrompt(side)
+--     local currentside = '1'
+--     if side == 'Left' then
+--         currentside = '1'
+--     elseif side == 'Right' then
+--         currentside = '2'
+--     end
+--     for i,v in next, workspace.Map.Stages:GetChildren() do
+--         if v:FindFirstChild('Microphones') then
+--             for i1,v1 in next, v.Microphones:GetChildren() do
+--                 if v1.Name == currentside and v1:FindFirstChild('Handle') and v1.Handle:FindFirstChild('Attachment') and v1.Handle.Attachment:FindFirstChildWhichIsA('ProximityPrompt') then
+--                     if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v1.Handle.Position).magnitude <= 50 then
+--                         return v1.Handle
+--                     end
+--                 end
+--             end
+--         end
+--     end
+-- end
 
-local Songs = {
-    --{'VSCyrix_Voltage','Hard'},
-    --{'VSCamellia_Me','Mania'},
-    --{'VSCamellia_Ghost','Mania'},
-    --{'VSPonko_Mortis','Hard'},
-    --{'VSPonko_Banned','Hard'},
-    --{'VSAgoti_Agoti','Insane'},
-    {'VSMonika_BaraNoYume','Hard'},
-}
+-- local Songs = {
+--     {'VSCyrix_Voltage','Hard'},
+--     {'VSCamellia_Me','Mania'},
+--     {'VSCamellia_Ghost','Mania'},
+--     {'VSPonko_Mortis','Hard'},
+--     {'VSPonko_Banned','Hard'},
+--     {'VSAgoti_Agoti','Insane'},
+--     {'VSMonika_BaraNoYume','Hard'},
+-- }
 
-game:GetService('RunService'):BindToRenderStep(shared._id, 1, function()
-	if not library.flags.farmscore then return end
-    if game.Players.LocalPlayer.PlayerGui.GameUI.Arrows.Visible == false then
-        if game.Players.LocalPlayer.PlayerGui.GameUI.Solo.Visible == false then
-            local trigger = getPrompt(library.flags.pickStage)
-            if trigger then
-                trigger.Attachment:FindFirstChildWhichIsA('ProximityPrompt'):InputHoldBegin()
-            end
-        end
-        if game.Players.LocalPlayer.PlayerGui.GameUI.SongSelector.Visible == true then
-            task.wait(2)
-            game.ReplicatedStorage.RF:InvokeServer({"Server","SelectMap"}, {"Default"})
-            game.ReplicatedStorage.RF:InvokeServer({"Server","SelectWin"}, {"HighestScore"})
-            game.ReplicatedStorage.RF:InvokeServer({'Server','SelectSong'}, Songs[math.random(1, #Songs)])
-            repeat task.wait() until game.Players.LocalPlayer.PlayerGui.GameUI.Arrows.Visible == true or not library.flags.farmscore
-        end
-    end
-    task.wait(0.5)
-end)
+-- game:GetService('RunService'):BindToRenderStep(shared._id, 1, function()
+-- 	if not library.flags.farmscore then return end
+--     if game.Players.LocalPlayer.PlayerGui.GameUI.Arrows.Visible == false then
+--         if game.Players.LocalPlayer.PlayerGui.GameUI.Solo.Visible == false then
+--             local trigger = getPrompt(library.flags.pickStage)
+--             if trigger then
+--                 trigger.Attachment:FindFirstChildWhichIsA('ProximityPrompt'):InputHoldBegin()
+--             end
+--         end
+--         if game.Players.LocalPlayer.PlayerGui.GameUI.SongSelector.Visible == true then
+--             task.wait(2)
+--             game.ReplicatedStorage.RF:InvokeServer({"Server","SelectMap"}, {"Default"})
+--             game.ReplicatedStorage.RF:InvokeServer({"Server","SelectWin"}, {"HighestScore"})
+--             game.ReplicatedStorage.RF:InvokeServer({'Server','SelectSong'}, Songs[math.random(1, #Songs)])
+--             repeat task.wait() until game.Players.LocalPlayer.PlayerGui.GameUI.Arrows.Visible == true or not library.flags.farmscore
+--         end
+--     end
+--     task.wait(0.5)
+-- end)
 
 local window = library:CreateWindow('Funky Friday') do
 	local folder = window:AddFolder('Main') do
@@ -220,9 +246,9 @@ local window = library:CreateWindow('Funky Friday') do
 		folder:AddSlider({ text = 'Ok %', flag = 'okChance', min = 0, max = 100, value = 0 })
         folder:AddSlider({ text = 'Bad %', flag = 'badChance', min = 0, max = 100, value = 0 })
 	end
-    local folder1 = window:AddFolder('Farm') do
-        folder1:AddToggle({ text = 'Score', flag = 'farmscore' })
-        folder1:AddList({text = 'Stage', flag = 'pickStage', value = 'Left', values = {'Left', 'Right'}})
-    end
+    -- local folder1 = window:AddFolder('Farm') do
+    --     folder1:AddToggle({ text = 'Score', flag = 'farmscore' })
+    --     folder1:AddList({text = 'Stage', flag = 'pickStage', value = 'Left', values = {'Left', 'Right'}})
+    -- end
 end
 library:Init()
